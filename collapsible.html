@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.collapsible {
+    overflow: hidden;
+    transition: height 1s ease;
+}
+</style>
+<script>
+function installHandler() {
+    for (let itm of document.getElementsByClassName("collapsibleWrapper")) {
+        const toggleButton = itm.querySelector(".collapseButton");
+        const collapsible = itm.querySelector(".collapsible");
+        const collapsibleContent = collapsible.querySelector(".collapsibleContent");
+        toggleButton.addEventListener("click", (e) => toggleCollapse(e, collapsible, collapsibleContent));
+    }
+}
+function toggleCollapse(e, collapsible, collapsibleContent) {
+    e.preventDefault();
+    const isExpanded = collapsible.classList.contains("expanded");
+    collapsible.classList.toggle("expanded");
+    if (isExpanded === true) {
+        collapsible.style.height = "0px";
+        collapsible.style.marginBottom  = "0px";
+    } else {
+        collapsible.style.height = collapsibleContent.getBoundingClientRect().height + "px";
+        collapsible.style.marginBottom = "3rem";
+    }
+}
+window.onload = installHandler;
+</script>
+
+</head>
+<body>
+
+<div class="collapsibleWrapper">
+    <div class="collapseButton"><button>Toggle</button></div>
+    <div class="collapsible" style="height: 0px;">
+        <ul class="collapsibleContent">
+            <li>Asdf</li>
+            <li>Qwerty</li>
+            <li>Lorem te ipsum</li>
+        </ul>
+    </div>
+</div>    
+<div>Next div</div>
+
+</body>
+</html>
