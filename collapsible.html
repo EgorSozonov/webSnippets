@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
+    
 <style>
 .collapsible {
     overflow: hidden;
     transition: height 1s ease;
 }
 </style>
+
 <script>
 function installHandler() {
     for (let itm of document.getElementsByClassName("collapsibleWrapper")) {
@@ -16,6 +18,7 @@ function installHandler() {
         toggleButton.addEventListener("click", (e) => toggleCollapse(e, collapsible, collapsibleContent));
     }
 }
+
 function toggleCollapse(e, collapsible, collapsibleContent) {
     e.preventDefault();
     const isExpanded = collapsible.classList.contains("expanded");
@@ -28,6 +31,7 @@ function toggleCollapse(e, collapsible, collapsibleContent) {
         collapsible.style.marginBottom = "3rem";
     }
 }
+
 window.onload = installHandler;
 </script>
 
