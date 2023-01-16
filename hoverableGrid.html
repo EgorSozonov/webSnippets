@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+.gridWrap {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-column-gap: 32px;
+    grid-row-gap: 32px;
+}
+
+.itemWrapper {
+	position: relative;
+	overflow: hidden;
+    height: 330px;
+}
+
+.itemContent {
+    position: relative;
+	min-width: 260px;
+    width: 100%;
+	height: 330px;
+	display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 15px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.itemText {
+    z-index: 5;
+    color: white;
+    margin: 15px;
+}
+
+.itemTextTitle {
+    font-size: 40px;
+    text-shadow: 2px 0 black, -2px 0 black, 0 2px black, 0 -2px black,
+             1px 1px black, -1px -1px black, 1px -1px black, -1px 1px black;
+}
+
+.itemMoreMarker {
+    position: absolute;
+    right: 30px;
+    top: 30px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: white 2px solid;
+    z-index: 3;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    line-height: 30px;
+    transform: scale(0.5);
+}
+
+.itemContent:hover .itemMoreMarker {
+    transform: scale(1.0);
+    transition: 0.4s;
+}
+
+.itemContent:hover .itemBg, .itemContent:hover .itemText {
+    transform: scale(1.04);
+    transition: 0.4s;
+}
+
+.itemBg {
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: cover;
+    min-width: 530px;
+    width: 100%;
+	min-height: 330px;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+</style>
+
+</head>
+<body>
+
+<div class="gridWrap">
+    <div class="itemWrapper">                                
+        <div class="itemContent">
+            <div class="itemText">
+                <div class="itemTextTitle">Asdf</div>
+            </div>                                    
+            <div class="itemBg" style="background-color: hsl(170, 90%, 20%);"></div>
+            <!--<div class="itemBg" style="background-image: url('static/image.jpg');"></div>-->
+            <div class="itemMoreMarker">+</div>            
+        </div>
+    </div>
+
+    <div class="itemWrapper">                                
+        <div class="itemContent">
+            <div class="itemText">
+                <div class="itemTextTitle">Qwerty</div>
+            </div>
+            <div class="itemBg" style="background-color: hsl(170, 90%, 20%);"></div>
+            <!--<div class="itemBg" style="background-image: url('static/image.jpg');"></div>-->
+            <div class="itemMoreMarker">+</div>
+        </div>
+    </div>
+
+    <div class="itemWrapper">
+        <div class="itemContent">
+            <div class="itemText">
+                <div class="itemTextTitle">Idem quam</div>
+            </div>
+            <div class="itemBg" style="background-color: hsl(170, 90%, 20%);"></div>
+            <!--<div class="itemBg" style="background-image: url('static/image.jpg');"></div>-->
+            <div class="itemMoreMarker">+</div>
+        </div>
+    </div>
+    <div class="itemWrapper">
+        <div class="itemContent">
+            <div class="itemText">
+                <div class="itemTextTitle">yuyuy</div>
+            </div>
+            <div class="itemBg" style="background-color: hsl(170, 90%, 20%);"></div>
+            <!--<div class="itemBg" style="background-image: url('static/image.jpg');"></div>-->
+            <div class="itemMoreMarker">+</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
