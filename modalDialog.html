@@ -1,0 +1,196 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+
+<style>
+body {
+	background-color: black;
+}
+
+
+#modalOverlay {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    background: hsla(0, 50%, 10%, 0.7);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modalDialog {
+    position: relative;
+    width: 80vw;
+    min-width: 400px;
+    height: 80vh;
+    background: white;
+    /* border-top-right-radius: 1rem;
+    border-top-left-radius: 1rem; */
+    overflow: auto;
+    z-index: 1000;
+}
+
+.modalHeader {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 1.6rem;
+    color: white;
+    font-weight: bold;
+    background-color: hsl(0, 90%, 30%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modalHeaderX {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 1.6rem;
+    width: 4rem;
+    border-left: white 2px solid;
+
+    background-color: black;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.modalBody {
+    margin-top: 2rem; /* for the header */
+    margin-left: 5%;
+    width: 90%;
+}
+
+.modalBody form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    row-gap: 1rem;
+}
+
+#modalBodyForm input[type=text], #modalBodyForm input[type=email] {
+    width: 90%;
+}
+
+#modalBodyForm input[type=button], #modalBodyForm input[type=submit] {
+    height: 2rem;
+    padding: 0.5rem;
+    cursor: pointer;
+}
+
+.modalButtons {
+    position: absolute;
+    bottom: 1rem;
+    width: 100%;
+    height: 1.8rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.modalBodyTextarea {
+    width: 90%;
+    min-height: 4rem;
+}
+</style>
+<script>
+function toggleModal() {
+    const modalOverlay = document.getElementById("modalOverlay")
+    if (modalOverlay.style.display === "none") {
+        modalOverlay.style.display = "flex"
+        document.getElementById("modalBodyForm").reset()
+    } else {
+        modalOverlay.style.display = "none"
+    }
+}
+
+function cancel(e) {
+    e.preventDefault();
+    toggleModal()
+}
+
+function modalFormSubmit(submitForm, event) {
+    event.preventDefault();
+    const fData = new FormData(submitForm)
+    const formData = {}
+    for (const ky of fData.keys()) {
+        formData[ky] = fData.get(ky)
+    }
+    if (!validateAccreditationForm(formData)) {
+        toastWarning("Одно или несколько полей формы некорректно заполнены!");
+        return
+    }
+    fetch("/accr/create", { method: "POST", 
+							headers: {"Accept": "application/json", "Content-Type": "application/json"},
+                            credentials: "same-origin",
+                            body: JSON.stringify(formData) }
+    )
+    .then((response) => {
+            if (response.ok === true) {
+                toastSuccess("Запрос на аккредитацию добавлен", "")
+                toggleModal()
+            } else {
+                response.text().then((txt) => {
+                    toastError("Ошибка", txt)
+                });
+            }
+        },
+        (errResponse) => {
+            toastError("Ошибка", errResponse.toString())
+        }
+    );
+}
+
+function validateAccreditationForm(formData) {
+    console.log("validateAccreditationForm")
+    if (!formData.companyName || formData.companyName.length < 1 || formData.companyName.length > 1000
+        || !formData.companyEmail || formData.companyEmail.length < 1 || formData.companyEmail.length > 128
+        || !formData.companyText || formData.companyText.length < 1 || formData.companyText.length > 5000) {
+        return false;
+    }
+    return true
+}
+</script>
+
+</head>
+<body>
+
+<div>
+	<button onclick="toggleModal();">Modal</button>
+</div>
+
+<div id="modalOverlay" style="display: none;">
+    <div class="modalDialog">
+        <div class="modalHeader"><p>Dialog title<p></p></div>
+        <div class="modalHeaderX" onclick="toggleModal();">X</div>
+        <div class="modalBody">
+            <form id="modalBodyForm" onsubmit="modalFormSubmit(this, event);">
+                <label>Название</label>
+                <input type="text" name="companyName" />
+                <label>Электронная почта</label>
+                <input type="email" name="companyEmail" />
+                <label>Текст</label>
+                <textarea class="modalBodyTextarea" name="companyText"></textarea>
+                <div class="modalButtons">
+                    <div class="modalButton">
+                        <input type="submit" value="ОК" />
+                    </div>
+                    <div class="modalButton">
+                        <input type="button" onclick="cancel(event);" value="Cancel" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

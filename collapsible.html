@@ -3,30 +3,84 @@
 <head>
     
 <style>
+body {
+	background-color: black;
+	color: white;
+}
+
+.collapsibleItem {
+	margin: 1rem;
+}
+	
 .collapsible {
     overflow: hidden;
     transition: height 1s ease;
+    padding: 1rem;
 }
+
+.expanded svg {
+    rotate: 90deg;
+}
+
+.collapsibleHeader {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.collapseButton {
+	margin-right: 10px;
+}
+
+.collapseButton {
+	background: transparent;
+	width: 30px;
+	height: 30px;
+	position: relative;
+	border-radius: 50%;
+	border: 2px white solid;
+	transition: 0.3s ease background, 0.3s ease color;	
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+}
+
+.collapseButton svg {
+	position: relative;
+	left: 1px;
+	width: 12px;
+	height: 7px;
+	fill: white;
+	transform: rotate(-90deg);
+	transition: 0.3s ease transform, 0.3s ease fill;
+}
+
+
 </style>
 
 <script>
 function installHandler() {
-    for (let itm of document.getElementsByClassName("collapsibleWrapper")) {
+    for (let itm of document.getElementsByClassName("collapsibleItem")) {
         const toggleButton = itm.querySelector(".collapseButton");
         const collapsible = itm.querySelector(".collapsible");
         const collapsibleContent = collapsible.querySelector(".collapsibleContent");
-        toggleButton.addEventListener("click", (e) => toggleCollapse(e, collapsible, collapsibleContent));
+        toggleButton.addEventListener("click", 
+									  (e) => toggleCollapse(e, toggleButton, collapsible, collapsibleContent));
     }
 }
 
-function toggleCollapse(e, collapsible, collapsibleContent) {
+function toggleCollapse(e, toggleButton, collapsible, collapsibleContent) {
     e.preventDefault();
     const isExpanded = collapsible.classList.contains("expanded");
+    toggleButton.classList.toggle("expanded");
     collapsible.classList.toggle("expanded");
     if (isExpanded === true) {
         collapsible.style.height = "0px";
         collapsible.style.marginBottom  = "0px";
     } else {
+		console.log(collapsibleContent.getBoundingClientRect().height)
         collapsible.style.height = collapsibleContent.getBoundingClientRect().height + "px";
         collapsible.style.marginBottom = "3rem";
     }
@@ -38,8 +92,15 @@ window.onload = installHandler;
 </head>
 <body>
 
-<div class="collapsibleWrapper">
-    <div class="collapseButton"><button>Toggle</button></div>
+<div class="collapsibleItem">
+	<div class="collapsibleHeader">
+		<span class="collapseButton">
+			<svg viewBox="-953.4 538.6 8.7 5.1"> 
+				<polygon class="st0" points="-949, 543.7 -953.4, 539.4 -952.6, 538.6 -949, 542.3 -945.4, 538.6 -944.6, 539.4"></polygon>
+			</svg>			
+		</span>
+		<span>expand</span>
+	</div>
     <div class="collapsible" style="height: 0px;">
         <ul class="collapsibleContent">
             <li>Asdf</li>
@@ -47,7 +108,27 @@ window.onload = installHandler;
             <li>Lorem te ipsum</li>
         </ul>
     </div>
-</div>    
+</div>
+<div class="collapsibleItem">
+	<div class="collapsibleHeader">
+		<span class="collapseButton">
+			<svg viewBox="-953.4 538.6 8.7 5.1"> 
+				<polygon class="st0" points="-949, 543.7 -953.4, 539.4 -952.6, 538.6 -949, 542.3 -945.4, 538.6 -944.6, 539.4"></polygon>
+			</svg>			
+		</span>
+		<span>expand</span>
+	</div>
+    <div class="collapsible" style="height: 0px;">
+        <ul class="collapsibleContent">
+            <li>Asdf</li>
+            <li>Qwerty</li>
+            <li>Lorem te ipsum</li>
+            <li>Lorem te ipsum</li>
+            <li>Lorem te ipsum</li>
+            <li>Lorem te ipsum</li>
+        </ul>
+    </div>
+</div>
 <div>Next div</div>
 
 </body>

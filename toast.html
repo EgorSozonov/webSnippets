@@ -1,0 +1,211 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+
+<style>
+body {
+	background-color: black;
+}
+
+
+
+#toastContainer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: auto;
+}
+
+.toast {
+    position: relative;
+    margin: 1rem;
+    padding: 1rem;
+    border-radius: 4px;
+    background: #F5F5F5;
+    cursor: pointer;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.19);
+    animation-name: toastSlideIn;
+    animation-duration:  0.5s;
+    animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+}
+
+.toastFadeOut {
+    animation-name: toastFadeOut;
+    animation-duration: 2s;
+    animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    animation-fill-mode: forwards;
+}
+
+#toastContainer p,
+#toastContainer h4 {
+    margin: 3px 0!important;
+}
+
+.toastTitle {
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.toastText {
+    font-size: 14px;
+    color: #777;
+}
+
+.toastIcon {
+    position: absolute;
+    top: 5px;
+    left: -40px;
+    width: 50px;
+    height: 50px;
+    border-radius: 100%;
+    background: #FFF;
+}
+
+.toast a, .toast a:hover {
+    color: #549EDB !important;
+    text-decoration: none !important;
+}
+
+/** toast types */
+.toastSuccess {
+    border-bottom: 4px solid #51C625;
+}
+
+.toastWarning {
+    border-bottom: 4px solid #DB9215;
+}
+
+.toastError {
+    border-bottom: 4px solid #DB2B1D;
+}
+
+.toastInfo {
+    border-bottom: 4px solid #27ABDB;
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translate3d(400px, 0, 0);
+        opacity: 0;
+    }
+    to {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes toastFadeOut {
+    from {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+    to {
+        transform: translate3d(400px, 0, 0);
+        opacity: 0;
+    }
+}
+</style>
+
+<script>
+let autoincrement = 0;
+
+
+function toastSuccess(title, text) {
+    toastCreate({
+        title: title,
+        text: text,
+        type: "success",
+    });
+}
+
+function toastWarning(title, text) {
+    toastCreate({
+        title: title,
+        text: text,
+        type: "warning",
+    });
+}
+
+function toastError(title, text) {
+    toastCreate({
+        title: title,
+        text: text,
+        type: "error",
+    });
+}
+
+
+function toastCreate(options) {
+    let toast = document.createElement("div");
+    autoincrement++;
+    toast.id = "toast" + autoincrement;
+    toast.className = "toast";
+
+    if (options.title) {
+        const h4 = document.createElement("h4");
+        h4.className = "toastTitle";
+        h4.innerHTML = options.title;
+        toast.appendChild(h4);
+    }
+
+    if (options.text) {
+        const p = document.createElement("p");
+        p.className = "toastText";
+        p.innerHTML = options.text;
+        toast.appendChild(p);
+    }
+
+    if (options.icon) {
+        const img = document.createElement("img");
+        img.src = options.icon;
+        img.className = "toastIcon";
+        toast.appendChild(img);
+    }
+
+    // click callback
+    if (typeof options.callback === "function") {
+        toast.addEventListener("click", options.callback);
+    }
+
+    // toast api
+    toast.hide = function() {
+        toast.className += " toastFadeOut";
+        toast.addEventListener("animationend", removeToast, false);
+    };
+
+    // autohide
+    if (options.timeout) {
+        setTimeout(toast.hide, options.timeout);
+    }
+    else setTimeout(toast.hide, 2000);
+
+    if (options.type) {
+        toast.className += " toast" + options.type[0].toUpperCase() + options.type.substring(1);
+    }
+
+    toast.addEventListener("click", toast.hide);
+
+    function removeToast() {
+        document.getElementById("toastContainer").removeChild(toast);
+    }
+
+    document.getElementById("toastContainer").appendChild(toast);
+    return toast;
+}
+</script>
+
+</head>
+<body>
+
+<div>
+	<button onclick="toastSuccess('asdf', 'bcjk');">Toast success</button>
+	<button onclick="toastError('Error', 'Something');">Toast error</button>
+</div>
+
+<div id="toastContainer"></div>
+
+</body>
+</html>
