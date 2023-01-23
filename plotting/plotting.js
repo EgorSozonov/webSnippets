@@ -34,29 +34,45 @@ function plotData(data, canv, style) {
     const sortedData = [...data.points]
     sortedData.sort((x, y) => x[0] < y[0] ? -1 : 1)
 
-    canv.ctx.strokeStyle = style.color
-    canv.ctx.lineWidth = style.lineThickness
-    canv.ctx.beginPath()
+    console.log("sortedData")
+    console.table(sortedData)
+
+    canv.strokeStyle = style.color
+    canv.lineWidth = style.lineThickness
+    canv.beginPath()
+
+    const widthPixels = canv.canvas.width
+    const heightPixels = canv.canvas.width
     const minMax = _plotCalcMinMax(sortedData)
 
     const boundsUnits = _plotCalcBoundsUnits(minMax)
-
-    canv.ctx.moveTo((pts[0][0] - xMin)/xTotal, (pts[0][1] - yMin)/yTotal)    
-    for (let i = 1; i < pts.length; i++) {
-        const x = (pts[i][0] - xMin)/xTotal
-        const y = (pts[i][1] - yMin)/yTotal
-        
+    const xInterval = boundsUnits.xBounds[1] - boundsUnits.xBounds[0]
+    const yInterval = boundsUnits.yBounds[1] - boundsUnits.yBounds[0]
+    function xToPixels(value) {
+        return (value - boundsUnits.xBounds[0])/xInterval*widthPixels
     }
-    canv.ctx.stroke()    
+
+    function yToPixels(value) {
+        return (value - boundsUnits.yBounds[0])/yInterval*heightPixels
+    }
+
+
+    canv.moveTo(xToPixels(sortedData[0][0]), yToPixels(sortedData[0][1]))
+    for (let i = 1; i < sortedData.length; i++) {
+        const w = xToPixels(sortedData[i][0])
+        const h = yToPixels(sortedData[i][1])
+        canv.lineTo(w, h);
+    }
+    canv.stroke()
 }
 
-function _plotCalcMinMax(points) {
+function _plotCalcMinMax(pts) {
     let xMin = pts[0][0]
     let xMax = xMin
     let yMin = pts[0][1]
     let yMax = yMin
-    for (let i = 1; i < sortedData.length; i++) {
-        const x = sortedData[i][0]        
+    for (let i = 1; i < pts.length; i++) {
+        const x = pts[i][0]
         if (x < xMin) {
             xMin = x
         } else if (x > xMax) {
@@ -77,15 +93,29 @@ function _plotCalcBoundsUnits(minMax) {
     let xLowerBound = 0
     const xVals = _plotCalcBoundsUnitsOneDim(minMax.xMin, minMax.xMax)
     const yVals = _plotCalcBoundsUnitsOneDim(minMax.yMin, minMax.yMax)
+    console.log("xVals")
+    console.dir(xVals)
+    console.log("yVals")
+    console.dir(yVals)
     return { xBounds: xVals.bounds, xUnit: xVals.unit, yBounds: yVals.bounds, yUnit: yVals.unit }
 }
 
 /** Returns { bounds: [num num], unit: num, } */
 function _plotCalcBoundsUnitsOneDim(min, max) {
-    let xLowerBound = 0
-    if (minMax.xMin !== 0) {
-        const logLower = 
+    const interval = max - min
+    if (interval === 0.0) {
+        return { bounds: [-1.0, 1.0], unit: 1.0 };
     }
+    const logOfUnit = Math.floor(Math.log10(interval) - 1)
+    let theUnit = Math.pow(10, logOfUnit)
+    const fiveTimesUnit = 5.0*theUnit
+    if (interval/fiveTimesUnit > 8.0) {
+        theUnit = fiveTimesUnit
+    }
+    const lowerBound = theUnit*(Math.floor(min/theUnit))
+    const upperBound = lowerBound + theUnit*(Math.ceil(interval/theUnit))
+
+    return { bounds: [lowerBound, upperBound], unit: theUnit }
 }
 
 function plotFunction(c, strokeStyle, func) {
@@ -447,5 +477,5 @@ function plotDraw3dFunction(c, zMin, zMax, alpha, gv, func) {
 
 
 function _plotClear(c) {
-    c.ctx.clearRect(0, 0, c.ctx.canvas.width, c.ctx.canvas.height);
+    c.clearRect(0, 0, c.canvas.width, c.canvas.height);
 }
