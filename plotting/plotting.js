@@ -24,25 +24,44 @@ function _plotGetGridPointDist(min, max, factor) {
 }
 
 /**
-   data: {axes: [], points: []}
+   data: { axes: [], points: [] }
    canv: canvas
-   style: { stroke: StrokeStyle, lineWidth: number }
+   style: { color: String, lineThickness: Number }
  */
 function plotData(data, canv, style) {
     _plotClear(canv);
-    canv.ctx.strokeStyle = style.stroke
-    canv.ctx.lineWidth = style.lineWidth
+    if (!data || data.length < 1) return
+    canv.ctx.strokeStyle = style.color
+    canv.ctx.lineWidth = style.lineThickness
     canv.ctx.beginPath()
     const pts = data.points
+    let xMin = pts[0][0]
+    let xMax = xMin
+    let yMin = pts[0][1]
+    let yMax = yMin
+    for (let i = 1; i < pts.length; i++) {
+        const x = pts[i][0]        
+        if (x < xMin) {
+            xMin = x
+        } else if (x > xMax) {
+            xMax = x
+        }
+        const y = pts[i][1]
+        if (y < yMin) {
+            yMin = y
+        } else if (y > yMax) {
+            yMax = y
+        }
+        
+        
+    }
 
 
-    const xMin = -1
-    const xMax = 10
+
     const xUnit = 1
     const xTotal = xMax - xMin
-    const yMin = -1
-    const yMax = 10
-    const yUnit = 1
+
+    let yUnit = 1
     const yTotal = yMax - yMin
 
     canv.ctx.moveTo(pts[0][0] - xMin)/xTotal, pts[0][1] - yMin)/yTotal)    

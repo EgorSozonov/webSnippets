@@ -1,6 +1,9 @@
 <html>
 <head>
 <style>
+body {
+    background-color: black;
+}      
 .canvasContainer {
 	position: relative;
 }
@@ -18,23 +21,26 @@
 <script>
 function draw() {
     const canvas = document.getElementById("grid");
-    const config = {
-	    xMin: -3,
-	    xMax: 5,
-	    yMin: -1,
-	    yMax: 2,
-	    ctx: canvas.getContext("2d")
-    };
+    //const config = {
+	//    xMin: -3,
+	//    xMax: 5,
+	//   yMin: -1,
+	//    yMax: 2,
+	//    ctx: canvas.getContext("2d")
+    //};
 
-    const configF2 = Object.assign({}, config);
-    configF2.ctx = canvas.getContext("2d");
+    //const configF2 = Object.assign({}, config);
+    //configF2.ctx = canvas.getContext("2d");
 
-    plotDrawGrid(config);
-    plotFunction(
-	    configF2,
-	    "#000000",
-	    x => ((x * x) / 10) * Math.sin(x) + 0.4 + Math.sin(x * 100) / 100
-    );
+    //plotDrawGrid(config);
+    //plotFunction(
+	//    configF2,
+	//    "#000000",
+	//    x => ((x * x) / 10) * Math.sin(x) + 0.4 + Math.sin(x * 100) / 100
+    //);
+    const data = {points: [[1, 2], [2, 3], [3, 0]],
+                  axes: [{name: "count of objects", unit: ""}, {name: "wall clock time", unit: "s"}] }
+    plotData(data, canv.getContext("2d"), {color: "#00FF00", lineThickness: 2})
 }
 
 
