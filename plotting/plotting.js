@@ -31,16 +31,32 @@ function _plotGetGridPointDist(min, max, factor) {
 function plotData(data, canv, style) {
     _plotClear(canv);
     if (!data || data.length < 1) return
+    const sortedData = [...data.points]
+    sortedData.sort((x, y) => x[0] < y[0] ? -1 : 1)
+
     canv.ctx.strokeStyle = style.color
     canv.ctx.lineWidth = style.lineThickness
     canv.ctx.beginPath()
-    const pts = data.points
+    const minMax = _plotCalcMinMax(sortedData)
+
+    const boundsUnits = _plotCalcBoundsUnits(minMax)
+
+    canv.ctx.moveTo((pts[0][0] - xMin)/xTotal, (pts[0][1] - yMin)/yTotal)    
+    for (let i = 1; i < pts.length; i++) {
+        const x = (pts[i][0] - xMin)/xTotal
+        const y = (pts[i][1] - yMin)/yTotal
+        
+    }
+    canv.ctx.stroke()    
+}
+
+function _plotCalcMinMax(points) {
     let xMin = pts[0][0]
     let xMax = xMin
     let yMin = pts[0][1]
     let yMax = yMin
-    for (let i = 1; i < pts.length; i++) {
-        const x = pts[i][0]        
+    for (let i = 1; i < sortedData.length; i++) {
+        const x = sortedData[i][0]        
         if (x < xMin) {
             xMin = x
         } else if (x > xMax) {
@@ -51,26 +67,25 @@ function plotData(data, canv, style) {
             yMin = y
         } else if (y > yMax) {
             yMax = y
-        }
-        
-        
+        }                
     }
+    return { xMin, xMax, yMin, yMax }
+}
 
+/** Returns { xBounds: [num num], xUnit: num, yBounds: [num num], yUnit: num } */
+function _plotCalcBoundsUnits(minMax) {
+    let xLowerBound = 0
+    const xVals = _plotCalcBoundsUnitsOneDim(minMax.xMin, minMax.xMax)
+    const yVals = _plotCalcBoundsUnitsOneDim(minMax.yMin, minMax.yMax)
+    return { xBounds: xVals.bounds, xUnit: xVals.unit, yBounds: yVals.bounds, yUnit: yVals.unit }
+}
 
-
-    const xUnit = 1
-    const xTotal = xMax - xMin
-
-    let yUnit = 1
-    const yTotal = yMax - yMin
-
-    canv.ctx.moveTo(pts[0][0] - xMin)/xTotal, pts[0][1] - yMin)/yTotal)    
-    for (let i = 1; i < pts.length; i++) {
-        const x = (pts[i][0] - xMin)/xTotal
-        const y = (pts[i][1] - yMin)/yTotal
-        
+/** Returns { bounds: [num num], unit: num, } */
+function _plotCalcBoundsUnitsOneDim(min, max) {
+    let xLowerBound = 0
+    if (minMax.xMin !== 0) {
+        const logLower = 
     }
-    canv.ctx.stroke()    
 }
 
 function plotFunction(c, strokeStyle, func) {
