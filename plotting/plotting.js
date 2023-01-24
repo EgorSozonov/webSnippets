@@ -9,17 +9,14 @@ function plotData(data, canv, style) {
     const sortedData = [...data.points]
     sortedData.sort((x, y) => x[0] < y[0] ? -1 : 1)
 
-    console.log("sortedData")
-    console.table(sortedData)
-
-
-    const widthPixels = canv.canvas.width
-    const heightPixels = canv.canvas.height
+    const padding = 20
+    const widthPixels = canv.canvas.width - 2*padding
+    const heightPixels = canv.canvas.height - 2*padding
     const minMax = _plotCalcMinMax(sortedData)
 
     const boundsUnits = _plotCalcBoundsUnits(minMax)
 
-    _plotDrawDataGrid(canv, boundsUnits)
+    _plotDrawDataGrid(boundsUnits, canv, padding)
 
     canv.strokeStyle = style.color
     canv.lineWidth = style.lineThickness
@@ -29,15 +26,13 @@ function plotData(data, canv, style) {
     const yInterval = boundsUnits.yBounds[1] - boundsUnits.yBounds[0]
 
     function xToPixels(value) {
-        return (value - boundsUnits.xBounds[0])/xInterval*widthPixels
+        return (value - boundsUnits.xBounds[0])/xInterval*widthPixels + padding
     }
 
     function yToPixels(value) {
-        return heightPixels - (value - boundsUnits.yBounds[0])/yInterval*heightPixels
+        return heightPixels - (value - boundsUnits.yBounds[0])/yInterval*heightPixels + padding
     }
 
-    console.log("first Y")
-    console.log(sortedData[0][1])
     canv.moveTo(xToPixels(sortedData[0][0]), yToPixels(sortedData[0][1]))
     for (let i = 1; i < sortedData.length; i++) {
         const w = xToPixels(sortedData[i][0])
@@ -74,10 +69,7 @@ function _plotCalcBoundsUnits(minMax) {
     let xLowerBound = 0
     const xVals = _plotCalcBoundsUnitsOneDim(minMax.xMin, minMax.xMax)
     const yVals = _plotCalcBoundsUnitsOneDim(minMax.yMin, minMax.yMax)
-    console.log("xVals")
-    console.dir(xVals)
-    console.log("yVals")
-    console.dir(yVals)
+
     return { xBounds: xVals.bounds, xUnit: xVals.unit, yBounds: yVals.bounds, yUnit: yVals.unit }
 }
 
@@ -88,65 +80,148 @@ function _plotCalcBoundsUnitsOneDim(min, max) {
         return { bounds: [-1.0, 1.0], unit: 1.0 };
     }
     const logOfUnit = Math.floor(Math.log10(interval) - 1)
+
     let theUnit = Math.pow(10, logOfUnit)
-    const fiveTimesUnit = 5.0*theUnit
-    if (interval/fiveTimesUnit >= 8.0) {
-        theUnit = fiveTimesUnit
+    const unitsToTry = [theUnit*7.5, theUnit*5.0, theUnit*4.0, theUnit*2.5, theUnit*1.5, theUnit]
+    for (let un of unitsToTry) {
+        if (interval/un >= 8.0) {
+            theUnit = un
+            break
+        }
     }
+
     const lowerBound = theUnit*(Math.floor(min/theUnit))
     let numUnits = Math.ceil(interval/theUnit)
     if (numUnits % 2 > 0.5) {
         numUnits++
     }
-    console.log(`numUnits ${numUnits}`)
-    const upperBound = lowerBound + theUnit*numUnits
+
+    let upperBound = lowerBound + theUnit*numUnits
+    if (upperBound < max) { // since lowerBound is below min, this current numUnits might not be enough
+        upperBound += 2*theUnit
+    }
 
     return { bounds: [lowerBound, upperBound], unit: theUnit }
 }
 
 /** Bounds: { xBounds: [num num], xUnit: num, yBounds: [num num], yUnit: num } */
-function _plotDrawDataGrid(c, bounds) {
+function _plotDrawDataGrid(bounds, c, padding) {
     const xWidth = bounds.xBounds[1] - bounds.xBounds[0];
-    const xPixPerUnit = c.canvas.width / xWidth;
+    const xPixPerUnit = (c.canvas.width - 2*padding) / xWidth;
     const yWidth = bounds.yBounds[1] - bounds.yBounds[0];
-    const yPixPerUnit = c.canvas.height / yWidth;
+    const yPixPerUnit = (c.canvas.height - 2*padding) / yWidth;
 
     const axisColor =  "white";
     const gridColor = "hsl(0, 0%, 86%)";
     const textColor =  "white";
     c.fillStyle = textColor
     c.strokeStyle = gridColor;
-    {   // horizontal lines
+
+    let metXAxis = false
+    let metYAxis = false
+    const xUnitError = bounds.xUnit/20
+    const yUnitError = bounds.yUnit/20
+    {   // vertical lines
         const numUnits = (bounds.xBounds[1] - bounds.xBounds[0])/bounds.xUnit
-        _plotDrawLine(c, 1, 0, 1, c.canvas.height);
+        _plotDrawLine(c, padding, padding, padding, c.canvas.height - padding);
         for (let i = 0; i < numUnits; i++) {
             const positionRel = i*bounds.xUnit;
             const positionAbs = bounds.xBounds[0] + positionRel
-            const positionPix = positionRel*xPixPerUnit;
+            const positionPix = positionRel*xPixPerUnit + padding;
 
-            _plotDrawLine(c, positionPix, 0, positionPix, c.canvas.height);
-
+            if (Math.abs(positionAbs) < xUnitError) {
+                _plotDrawYAxis(positionPix, padding, c)
+                metYAxis = true
+            } else {
+                _plotDrawLine(c, positionPix, padding, positionPix, c.canvas.height - padding);
+            }
             const text = positionAbs.toFixed(2).toString()
             c.fillText(text, positionPix + 1, c.canvas.height/2 + 10);
         }
-        _plotDrawLine(c, c.canvas.width - 1, 0, c.canvas.width - 1, c.canvas.height);
+        _plotDrawLine(c, c.canvas.width - padding, padding, c.canvas.width - padding, c.canvas.height - padding);
     }
-    {   // vertical lines
+    {   // horizontal lines
         const numUnits = (bounds.yBounds[1] - bounds.yBounds[0])/bounds.yUnit
-        _plotDrawLine(c, 0, 2, c.canvas.width, 2);
+        _plotDrawLine(c, padding, padding, c.canvas.width - padding, padding);
         for (let i = 0; i < numUnits; i++) {
             const positionRel = i*bounds.yUnit;
             const positionAbs = bounds.yBounds[0] + positionRel
-            const positionPix = c.canvas.height - positionRel*yPixPerUnit;
-            _plotDrawLine(c, 0, positionPix, c.canvas.width, positionPix);
-
+            const positionPix = c.canvas.height - positionRel*yPixPerUnit - padding;
+            if (Math.abs(positionAbs) < yUnitError) {
+                _plotDrawXAxis(positionPix, padding, c)
+                metXAxis = true
+            } else {
+                _plotDrawLine(c, padding, positionPix, c.canvas.width - padding, positionPix);
+            }
             const text = positionAbs.toFixed(2).toString()
             c.fillText(text, c.canvas.width/2 + 2, positionPix - 4);
         }
-        _plotDrawLine(c, 0, c.canvas.height - 2, c.canvas.width, c.canvas.height - 2);
+        _plotDrawLine(c, padding, c.canvas.height - padding, c.canvas.width - padding, c.canvas.height - padding);
+    }
+
+    if (metYAxis === false && metXAxis === false) {
+        _plotDrawAxesNotTouching(bounds, padding, c)
+    } else if (metYAxis === false) {
+        _plotDrawYAxis(padding/2, padding, c)
+    } else if (metXAxis === false) {
+        _plotDrawXAxis(c.canvas.height - padding/2, padding, c)
     }
 }
 
+/** When the plotted data doesn't intersect any axes, we need to draw them in the padding */
+function _plotDrawAxesNotTouching(bounds, padding, canv) {
+    if (bounds.xBounds[0] > 0) {
+        if (bounds.yBounds[0] > 0) { // upper right quadrant
+            _plotDrawXAxis(canv.canvas.height - padding/2, padding, canv)
+            _plotDrawYAxis(padding/2, padding, canv)
+        } else {                     // lower right quadrant
+            _plotDrawXAxis(padding/2, padding, canv)
+            _plotDrawYAxisNoArrow(padding/2, padding, canv)
+        }
+    } else {
+        if (bounds.yBounds[0] > 0) { // upper left quadrant
+            _plotDrawXAxisNoArrow(canv.canvas.height - padding/2, padding, canv)
+            _plotDrawYAxis(canv.canvas.width - padding/2, padding, canv)
+        } else {                     // lower left quadrant
+            _plotDrawXAxisNoArrow(padding/2, padding, canv)
+            _plotDrawYAxisNoArrow(canv.canvas.width - padding/2, padding, canv)
+        }
+    }
+}
+
+function _plotDrawXAxis(yPix, padding, c) {
+    c.lineWidth = 2
+    _plotDrawLine(c, 0, yPix,
+                     c.canvas.width, yPix);
+    _plotDrawLine(c, c.canvas.width, yPix,
+                     c.canvas.width - padding*0.8, yPix - padding/4);
+    _plotDrawLine(c, c.canvas.width, yPix,
+                     c.canvas.width - padding*0.8, yPix + padding/4);
+    c.lineWidth = 1
+}
+
+function _plotDrawYAxis(xPix, pad, c) {
+    c.lineWidth = 2
+    _plotDrawLine(c, xPix, 0, xPix, c.canvas.height);
+    _plotDrawLine(c, xPix, 0,
+                     xPix - pad/4, pad*0.8);
+    _plotDrawLine(c, xPix, 0,
+                     xPix + pad/4, pad*0.8);
+    c.lineWidth = 1
+}
+
+function _plotDrawXAxisNoArrow(yPix, padding, c) {
+    c.lineWidth = 2
+    _plotDrawLine(c, padding/2, yPix,
+                     c.canvas.width, yPix);
+    c.lineWidth = 1
+}
+
+function _plotDrawYAxisNoArrow(xPix, pad, c) {
+    c.lineWidth = 2
+    _plotDrawLine(c, xPix, 0, xPix, c.canvas.height - pad/2);
+    c.lineWidth = 1
+}
 
 function _plotXCoordToPix(c, xCoord) {
     const xDiff = c.xMax - c.xMin;
