@@ -3,17 +3,32 @@
 <style>
 body {
     background-color: black;
+    color: white;
 }      
 .canvasContainer {
-	position: relative;
+    position: relative;
 }
 
 .canvasContainer canvas {
-	position: absolute;
-	left: 0;
-	top: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
 }
-	
+
+.plotWithLegend {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.plotWithLegend > div {
+    width: 600px;
+}
 </style>	
 
 <script src="plotting.js"></script>
@@ -21,24 +36,8 @@ body {
 <script>
 function draw() {
     const canvas = document.getElementById("grid");
-    //const config = {
-	//    xMin: -3,
-	//    xMax: 5,
-	//   yMin: -1,
-	//    yMax: 2,
-	//    ctx: canvas.getContext("2d")
-    //};
 
-    //const configF2 = Object.assign({}, config);
-    //configF2.ctx = canvas.getContext("2d");
-
-    //plotDrawGrid(config);
-    //plotFunction(
-	//    configF2,
-	//    "#000000",
-	//    x => ((x * x) / 10) * Math.sin(x) + 0.4 + Math.sin(x * 100) / 100
-    //);
-    const data = {points: [[1, 2], [2, 3], [3, 0]],
+    const data = {points: [[0, 2], [20, 3], [30, -1.2], [40, 4.8], [100, 2.5] ],
                   axes: [{name: "count of objects", unit: ""}, {name: "wall clock time", unit: "s"}] }
     plotData(data, canvas.getContext("2d"), {color: "#00FF00", lineThickness: 2})
 }
@@ -50,6 +49,13 @@ window.onload = () => draw();
 </head>	
 
 <body>
-<canvas id="grid" width="600px" height="600px"></canvas>	
+<div> asdf Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te
+NOT ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum </div>
+<div class="plotWithLegend">
+    <canvas id="grid" width="600px" height="600px"></canvas>
+    <div>This is the legend of the above plot. It's a very legendary plot that is also very greenful.</div>
+</div>
+<div>Lorem te ipsum next paragraph. Lorem te ipsum next paragraph. Lorem te ipsum next paragraph.
+Lorem te ipsum next paragraph. Lorem te ipsum next paragraph. </div>
 </body>
 </html>

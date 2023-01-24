@@ -1,28 +1,3 @@
-
-function _plotGetGridPointDist(min, max, factor) {
-   const diff = max - min;
-   let result = Math.pow(10.0, Math.ceil(Math.log(diff) / Math.log(10.0)) - 1);
-   switch (diff / result) {
-       case 7:
-       case 6:
-       case 5:
-       case 4:
-           result /= 2;
-           break;
-       case 3:
-           result /= 4;
-           break;
-       case 2:
-           result /= 5;
-           break;
-       case 1:
-           result /= 10;
-           break;
-   }
-   result *= factor;
-   return result;
-}
-
 /**
    data: { axes: [], points: [] }
    canv: canvas
@@ -37,26 +12,32 @@ function plotData(data, canv, style) {
     console.log("sortedData")
     console.table(sortedData)
 
+
+    const widthPixels = canv.canvas.width
+    const heightPixels = canv.canvas.height
+    const minMax = _plotCalcMinMax(sortedData)
+
+    const boundsUnits = _plotCalcBoundsUnits(minMax)
+
+    _plotDrawDataGrid(canv, boundsUnits)
+
     canv.strokeStyle = style.color
     canv.lineWidth = style.lineThickness
     canv.beginPath()
 
-    const widthPixels = canv.canvas.width
-    const heightPixels = canv.canvas.width
-    const minMax = _plotCalcMinMax(sortedData)
-
-    const boundsUnits = _plotCalcBoundsUnits(minMax)
     const xInterval = boundsUnits.xBounds[1] - boundsUnits.xBounds[0]
     const yInterval = boundsUnits.yBounds[1] - boundsUnits.yBounds[0]
+
     function xToPixels(value) {
         return (value - boundsUnits.xBounds[0])/xInterval*widthPixels
     }
 
     function yToPixels(value) {
-        return (value - boundsUnits.yBounds[0])/yInterval*heightPixels
+        return heightPixels - (value - boundsUnits.yBounds[0])/yInterval*heightPixels
     }
 
-
+    console.log("first Y")
+    console.log(sortedData[0][1])
     canv.moveTo(xToPixels(sortedData[0][0]), yToPixels(sortedData[0][1]))
     for (let i = 1; i < sortedData.length; i++) {
         const w = xToPixels(sortedData[i][0])
@@ -109,91 +90,60 @@ function _plotCalcBoundsUnitsOneDim(min, max) {
     const logOfUnit = Math.floor(Math.log10(interval) - 1)
     let theUnit = Math.pow(10, logOfUnit)
     const fiveTimesUnit = 5.0*theUnit
-    if (interval/fiveTimesUnit > 8.0) {
+    if (interval/fiveTimesUnit >= 8.0) {
         theUnit = fiveTimesUnit
     }
     const lowerBound = theUnit*(Math.floor(min/theUnit))
-    const upperBound = lowerBound + theUnit*(Math.ceil(interval/theUnit))
+    let numUnits = Math.ceil(interval/theUnit)
+    if (numUnits % 2 > 0.5) {
+        numUnits++
+    }
+    console.log(`numUnits ${numUnits}`)
+    const upperBound = lowerBound + theUnit*numUnits
 
     return { bounds: [lowerBound, upperBound], unit: theUnit }
 }
 
-function plotFunction(c, strokeStyle, func) {
-    _plotClear(c);
-    c.ctx.strokeStyle = strokeStyle;
-    c.ctx.lineWidth = 3;
-    c.ctx.beginPath();
-    for (let w = 0; w <= c.ctx.canvas.width; w++) {
-        const y = func(xPixToCoord(c, w));
-        const h = yCoordToPix(c, y);
-        if (w === 0) {
-            c.ctx.moveTo(w, h);
-            continue;
+/** Bounds: { xBounds: [num num], xUnit: num, yBounds: [num num], yUnit: num } */
+function _plotDrawDataGrid(c, bounds) {
+    const xWidth = bounds.xBounds[1] - bounds.xBounds[0];
+    const xPixPerUnit = c.canvas.width / xWidth;
+    const yWidth = bounds.yBounds[1] - bounds.yBounds[0];
+    const yPixPerUnit = c.canvas.height / yWidth;
+
+    const axisColor =  "white";
+    const gridColor = "hsl(0, 0%, 86%)";
+    const textColor =  "white";
+    c.fillStyle = textColor
+    c.strokeStyle = gridColor;
+    {   // horizontal lines
+        const numUnits = (bounds.xBounds[1] - bounds.xBounds[0])/bounds.xUnit
+        _plotDrawLine(c, 1, 0, 1, c.canvas.height);
+        for (let i = 0; i < numUnits; i++) {
+            const positionRel = i*bounds.xUnit;
+            const positionAbs = bounds.xBounds[0] + positionRel
+            const positionPix = positionRel*xPixPerUnit;
+
+            _plotDrawLine(c, positionPix, 0, positionPix, c.canvas.height);
+
+            const text = positionAbs.toFixed(2).toString()
+            c.fillText(text, positionPix + 1, c.canvas.height/2 + 10);
         }
-        c.ctx.lineTo(w, h);
+        _plotDrawLine(c, c.canvas.width - 1, 0, c.canvas.width - 1, c.canvas.height);
     }
-    c.ctx.stroke();
-}
+    {   // vertical lines
+        const numUnits = (bounds.yBounds[1] - bounds.yBounds[0])/bounds.yUnit
+        _plotDrawLine(c, 0, 2, c.canvas.width, 2);
+        for (let i = 0; i < numUnits; i++) {
+            const positionRel = i*bounds.yUnit;
+            const positionAbs = bounds.yBounds[0] + positionRel
+            const positionPix = c.canvas.height - positionRel*yPixPerUnit;
+            _plotDrawLine(c, 0, positionPix, c.canvas.width, positionPix);
 
-function plotDrawGrid(c, xFactor, yFactor, axisColor, gridColor) {
-    _plotClear(c);
-    const xDiff = c.xMax - c.xMin;
-    const xPixPerUnit = c.ctx.canvas.width / xDiff;
-    const yDiff = c.yMax - c.yMin;
-    const yPixPerUnit = c.ctx.canvas.height / yDiff;
-    xFactor = xFactor || 1;
-    yFactor = yFactor || 1;
-    const xF = _plotGetGridPointDist(c.xMin, c.xMax, xFactor);
-    const yF = _plotGetGridPointDist(c.yMin, c.yMax, yFactor);
-    axisColor = axisColor || "#000000";
-    gridColor = gridColor || "#b0b0b0";
-
-    {
-        let startValue = Math.ceil(c.xMin / xF) * xF;
-        let number = Math.round(Math.floor(xDiff / xF)) + 1;
-        let axisPosition;
-        if (c.yMin < 0 && c.yMax > 0) {
-            axisPosition = c.ctx.canvas.height + c.yMin * yPixPerUnit + 12;
-        } else {
-            axisPosition = c.ctx.canvas.height - 12;
+            const text = positionAbs.toFixed(2).toString()
+            c.fillText(text, c.canvas.width/2 + 2, positionPix - 4);
         }
-        c.ctx.strokeStyle = gridColor;
-        for (let i = 0; i < number; i++) {
-            if (Math.abs(startValue) < xF * 0.5) {
-                c.ctx.strokeStyle = axisColor;
-            }
-            const position = Math.round((startValue - c.xMin) * xPixPerUnit);
-            _plotDrawLine(c.ctx, position, 0, position, c.ctx.canvas.height);
-            c.ctx.fillStyle = axisColor;
-            const text = Math.round(startValue * 100) / 100;
-            c.ctx.fillText(text + '', position + 4, axisPosition);
-            c.ctx.strokeStyle = gridColor;
-            startValue += xF;
-        }
-    }
-
-    {
-        let startValue = Math.ceil(c.yMin / yF) * yF;
-        const number = Math.round(Math.floor(yDiff / yF)) + 1;
-        let axisPosition;
-        if (c.xMin < 0 && c.xMax > 0) {
-            axisPosition = -c.xMin * xPixPerUnit + 5;
-        } else {
-            axisPosition = 5;
-        }
-        c.ctx.strokeStyle = gridColor;
-        for (let i = 0; i < number; i++) {
-            if (Math.abs(startValue) < yF * 0.5) {
-                c.ctx.strokeStyle = axisColor;
-            }
-            const position = c.ctx.canvas.height - Math.round((startValue - c.yMin) * yPixPerUnit);
-            _plotDrawLine(c.ctx, 0, position, c.ctx.canvas.width, position);
-            c.ctx.fillStyle = axisColor;
-            const text = Math.round(startValue * 100) / 100;
-            c.ctx.fillText(text + '', axisPosition, position - 4);
-            c.ctx.strokeStyle = gridColor;
-            startValue += yF;
-        }
+        _plotDrawLine(c, 0, c.canvas.height - 2, c.canvas.width, c.canvas.height - 2);
     }
 }
 
@@ -227,23 +177,6 @@ function _plotDrawLine(ctx, x1, y1, x2, y2) {
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     ctx.stroke();
-}
-
-function plotFunction(c, strokeStyle, func) {
-    
-    c.ctx.strokeStyle = strokeStyle;
-    c.ctx.lineWidth = 3;
-    c.ctx.beginPath();
-    for (let w = 0; w <= c.ctx.canvas.width; w++) {
-        const y = func(_plotXPixToCoord(c, w));
-        const h = _plotYCoordToPix(c, y);
-        if (w === 0) {
-            c.ctx.moveTo(w, h);
-            continue;
-        }
-        c.ctx.lineTo(w, h);
-    }
-    c.ctx.stroke();
 }
 
 function _plotLineToPoints(c, wPoints, yPoints) {
