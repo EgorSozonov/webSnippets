@@ -3,23 +3,35 @@
    canv: canvas
    style: { color: String, lineThickness: Number }
  */
-function plotTheData(data, canv, style) {
+function plotTheData(data, canv) {
     _plotClear(canv);
-    if (!data || data.axes.length < 2 || data.points.length < 1) return
-    const sortedData = [...data.points]
-    sortedData.sort((x, y) => x[0] < y[0] ? -1 : 1)
-
+    const isMultipleSeries = data.series !== undefined
     const padding = 20
+    if (isMultipleSeries) {
+        _plotMultipleSeries(data, padding, canv)
+    } else {
+        _plotSingleSeries(data, padding, canv)
+    }
+}
+
+/**
+   data: { axes: { { name: string, unit: string } },
+           points: {},
+           style: { color: String, lineThickness: Number } }
+   canv: canvas 2D context
+
+ */
+function _plotSingleSeries(data, padding, canv) {
+    if (!data || data.axes.length < 2 || data.points.length < 1
+        || !data.style || !data.style.color) return
+
     const widthPixels = canv.canvas.width - 2*padding
     const heightPixels = canv.canvas.height - 2*padding
-    const minMax = _plotCalcMinMax(sortedData)
+    const minMax = _plotCalcMinMax(data.points)
 
     const boundsUnits = _plotCalcBoundsUnits(minMax)
 
     _plotDrawDataGrid(boundsUnits, data.axes, canv, padding)
-    canv.strokeStyle = style.color
-    canv.lineWidth = style.lineThickness
-    canv.beginPath()
 
     const xInterval = boundsUnits.xBounds[1] - boundsUnits.xBounds[0]
     const yInterval = boundsUnits.yBounds[1] - boundsUnits.yBounds[0]
@@ -32,6 +44,56 @@ function plotTheData(data, canv, style) {
         return heightPixels - (value - boundsUnits.yBounds[0])/yInterval*heightPixels + padding
     }
 
+    _plotDrawSerie(data, xToPixels, yToPixels, canv)
+}
+
+/**
+   data: {  axes: { { name: string, unit: string } }, series: [{}] }
+   canv: canvas
+   style: { color: String, lineThickness: Number }
+ */
+function _plotMultipleSeries(data, padding, canv) {
+    if (!data || data.axes.length < 2 || !data.series || data.series.length < 1) return
+
+    const widthPixels = canv.canvas.width - 2*padding
+    const heightPixels = canv.canvas.height - 2*padding
+    let minMax = null
+    for (let ky of Object.keys(data.series)) {
+        const newMinMax = _plotCalcMinMax(data.series[ky].points)
+        if (minMax === null) {
+            minMax = newMinMax
+        } else {
+            _plotMergeMinMax(minMax, newMinMax)
+        }
+    }
+
+    const boundsUnits = _plotCalcBoundsUnits(minMax)
+
+    _plotDrawDataGrid(boundsUnits, data.axes, canv, padding)
+    const xInterval = boundsUnits.xBounds[1] - boundsUnits.xBounds[0]
+    const yInterval = boundsUnits.yBounds[1] - boundsUnits.yBounds[0]
+
+    function xToPixels(value) {
+        return (value - boundsUnits.xBounds[0])/xInterval*widthPixels + padding
+    }
+
+    function yToPixels(value) {
+        return heightPixels - (value - boundsUnits.yBounds[0])/yInterval*heightPixels + padding
+    }
+
+    for (let ky of Object.keys(data.series)) {
+        _plotDrawSerie(data.series[ky], xToPixels, yToPixels, canv)
+    }
+}
+
+/** Draw a single serie (a single graph) of data on the canvas according to its style */
+function _plotDrawSerie(serie, xToPixels, yToPixels, canv) {
+    canv.strokeStyle = serie.style.color
+    canv.lineWidth = serie.style.lineThickness ? serie.style.lineThickness : 2;
+    canv.beginPath()
+
+    const sortedData = [...serie.points]
+    sortedData.sort((x, y) => x[0] < y[0] ? -1 : 1)
     canv.moveTo(xToPixels(sortedData[0][0]), yToPixels(sortedData[0][1]))
     for (let i = 1; i < sortedData.length; i++) {
         const w = xToPixels(sortedData[i][0])
@@ -39,6 +101,13 @@ function plotTheData(data, canv, style) {
         canv.lineTo(w, h);
     }
     canv.stroke()
+}
+
+function _plotMergeMinMax(total, single) {
+    if (single.xMin < total.xMin) total.xMin = single.xMin;
+    if (single.xMax > total.xMax) total.xMax = single.xMax;
+    if (single.yMin < total.yMin) total.yMin = single.yMin;
+    if (single.yMax > total.yMax) total.yMax = single.yMax;
 }
 
 function _plotCalcMinMax(pts) {
@@ -103,11 +172,21 @@ function _plotCalcBoundsUnitsOneDim(min, max) {
     return { bounds: [lowerBound, upperBound], unit: theUnit }
 }
 
-/** Axes: { { name: string, unit: string } } */
-function _plotDrawUnits(axes, canv) {
-    const axisXUnit = axes[0].unit
-    const axisXcoord = canv.canvas.width - canv.measureText(axisXUnit).width - 10
-    canv.fillText(axisXUnit, axisXcoord, canv.canvas.height - 2);
+
+function plotWriteLegend(plotData) {
+    if (plotData.series) {
+        let result = ""
+        for (let ky of Object.keys(plotData.series)) {
+            result += "<div style='background-color: "
+
+                + plotData.series[ky].style.color + "; width: 10px; height: 10px;'></div>";
+            result += ky
+        }
+        return result
+    } else {
+        return (plotData.axes[1].name + " vs " + plotData.axes[0].name)
+    }
+
 }
 
 /** Bounds: { xBounds: { num num }, xUnit: num, yBounds: { num num }, yUnit: num } */
