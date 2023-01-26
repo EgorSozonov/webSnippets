@@ -4,14 +4,14 @@
     
 <style>
 body {
-	background-color: black;
-	color: white;
+    background-color: black;
+    color: white;
 }
 
 .collapsibleItem {
-	margin: 1rem;
+    margin: 1rem;
 }
-	
+
 .collapsible {
     overflow: hidden;
     transition: height 1s ease;
@@ -23,38 +23,38 @@ body {
 }
 
 .collapsibleHeader {
-	width: 100%;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 .collapseButton {
-	margin-right: 10px;
+    margin-right: 10px;
 }
 
 .collapseButton {
-	background: transparent;
-	width: 30px;
-	height: 30px;
-	position: relative;
-	border-radius: 50%;
-	border: 2px white solid;
-	transition: 0.3s ease background, 0.3s ease color;	
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	cursor: pointer;
+    background: transparent;
+    width: 30px;
+    height: 30px;
+    position: relative;
+    border-radius: 50%;
+    border: 2px white solid;
+    transition: 0.3s ease background, 0.3s ease color;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
 }
 
 .collapseButton svg {
-	position: relative;
-	left: 1px;
-	width: 12px;
-	height: 7px;
-	fill: white;
-	transform: rotate(-90deg);
-	transition: 0.3s ease transform, 0.3s ease fill;
+    position: relative;
+    left: 1px;
+    width: 12px;
+    height: 7px;
+    fill: white;
+    transform: rotate(-90deg);
+    transition: 0.3s ease transform, 0.3s ease fill;
 }
 
 
@@ -67,7 +67,7 @@ function installHandler() {
         const collapsible = itm.querySelector(".collapsible");
         const collapsibleContent = collapsible.querySelector(".collapsibleContent");
         toggleButton.addEventListener("click", 
-									  (e) => toggleCollapse(e, toggleButton, collapsible, collapsibleContent));
+                                      (e) => toggleCollapse(e, toggleButton, collapsible, collapsibleContent));
     }
 }
 
@@ -80,7 +80,7 @@ function toggleCollapse(e, toggleButton, collapsible, collapsibleContent) {
         collapsible.style.height = "0px";
         collapsible.style.marginBottom  = "0px";
     } else {
-		console.log(collapsibleContent.getBoundingClientRect().height)
+        console.log(collapsibleContent.getBoundingClientRect().height)
         collapsible.style.height = collapsibleContent.getBoundingClientRect().height + "px";
         collapsible.style.marginBottom = "3rem";
     }
@@ -93,14 +93,14 @@ window.onload = installHandler;
 <body>
 
 <div class="collapsibleItem">
-	<div class="collapsibleHeader">
-		<span class="collapseButton">
-			<svg viewBox="-953.4 538.6 8.7 5.1"> 
-				<polygon class="st0" points="-949, 543.7 -953.4, 539.4 -952.6, 538.6 -949, 542.3 -945.4, 538.6 -944.6, 539.4"></polygon>
-			</svg>			
-		</span>
-		<span>expand</span>
-	</div>
+    <div class="collapsibleHeader">
+        <span class="collapseButton">
+            <svg viewBox="-953.4 538.6 8.7 5.1">
+                <polygon class="st0" points="-949, 543.7 -953.4, 539.4 -952.6, 538.6 -949, 542.3 -945.4, 538.6 -944.6, 539.4"></polygon>
+            </svg>
+        </span>
+        <span>expand</span>
+    </div>
     <div class="collapsible" style="height: 0px;">
         <ul class="collapsibleContent">
             <li>Asdf</li>
@@ -110,14 +110,14 @@ window.onload = installHandler;
     </div>
 </div>
 <div class="collapsibleItem">
-	<div class="collapsibleHeader">
-		<span class="collapseButton">
-			<svg viewBox="-953.4 538.6 8.7 5.1"> 
-				<polygon class="st0" points="-949, 543.7 -953.4, 539.4 -952.6, 538.6 -949, 542.3 -945.4, 538.6 -944.6, 539.4"></polygon>
-			</svg>			
-		</span>
-		<span>expand</span>
-	</div>
+    <div class="collapsibleHeader">
+        <span class="collapseButton">
+            <svg viewBox="-953.4 538.6 8.7 5.1">
+                <polygon class="st0" points="-949, 543.7 -953.4, 539.4 -952.6, 538.6 -949, 542.3 -945.4, 538.6 -944.6, 539.4"></polygon>
+            </svg>
+        </span>
+        <span>expand</span>
+    </div>
     <div class="collapsible" style="height: 0px;">
         <ul class="collapsibleContent">
             <li>Asdf</li>

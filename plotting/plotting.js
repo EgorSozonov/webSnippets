@@ -1,11 +1,11 @@
 /**
-   data: { axes: [], points: [] }
+   data: { axes: { { name: string, unit: string } }, points: {} }
    canv: canvas
    style: { color: String, lineThickness: Number }
  */
-function plotData(data, canv, style) {
+function plotTheData(data, canv, style) {
     _plotClear(canv);
-    if (!data || data.length < 1) return
+    if (!data || data.axes.length < 2 || data.points.length < 1) return
     const sortedData = [...data.points]
     sortedData.sort((x, y) => x[0] < y[0] ? -1 : 1)
 
@@ -16,8 +16,7 @@ function plotData(data, canv, style) {
 
     const boundsUnits = _plotCalcBoundsUnits(minMax)
 
-    _plotDrawDataGrid(boundsUnits, canv, padding)
-
+    _plotDrawDataGrid(boundsUnits, data.axes, canv, padding)
     canv.strokeStyle = style.color
     canv.lineWidth = style.lineThickness
     canv.beginPath()
@@ -64,7 +63,7 @@ function _plotCalcMinMax(pts) {
     return { xMin, xMax, yMin, yMax }
 }
 
-/** Returns { xBounds: [num num], xUnit: num, yBounds: [num num], yUnit: num } */
+/** Returns { xBounds: { num num }, xUnit: num, yBounds: { num num }, yUnit: num } */
 function _plotCalcBoundsUnits(minMax) {
     let xLowerBound = 0
     const xVals = _plotCalcBoundsUnitsOneDim(minMax.xMin, minMax.xMax)
@@ -73,7 +72,7 @@ function _plotCalcBoundsUnits(minMax) {
     return { xBounds: xVals.bounds, xUnit: xVals.unit, yBounds: yVals.bounds, yUnit: yVals.unit }
 }
 
-/** Returns { bounds: [num num], unit: num, } */
+/** Returns { bounds: { num num }, unit: num, } */
 function _plotCalcBoundsUnitsOneDim(min, max) {
     const interval = max - min
     if (interval === 0.0) {
@@ -104,8 +103,15 @@ function _plotCalcBoundsUnitsOneDim(min, max) {
     return { bounds: [lowerBound, upperBound], unit: theUnit }
 }
 
-/** Bounds: { xBounds: [num num], xUnit: num, yBounds: [num num], yUnit: num } */
-function _plotDrawDataGrid(bounds, c, padding) {
+/** Axes: { { name: string, unit: string } } */
+function _plotDrawUnits(axes, canv) {
+    const axisXUnit = axes[0].unit
+    const axisXcoord = canv.canvas.width - canv.measureText(axisXUnit).width - 10
+    canv.fillText(axisXUnit, axisXcoord, canv.canvas.height - 2);
+}
+
+/** Bounds: { xBounds: { num num }, xUnit: num, yBounds: { num num }, yUnit: num } */
+function _plotDrawDataGrid(bounds, axes, c, padding) {
     const xWidth = bounds.xBounds[1] - bounds.xBounds[0];
     const xPixPerUnit = (c.canvas.width - 2*padding) / xWidth;
     const yWidth = bounds.yBounds[1] - bounds.yBounds[0];
@@ -130,7 +136,7 @@ function _plotDrawDataGrid(bounds, c, padding) {
             const positionPix = positionRel*xPixPerUnit + padding;
 
             if (Math.abs(positionAbs) < xUnitError) {
-                _plotDrawYAxis(positionPix, padding, c)
+                _plotDrawYAxis(positionPix, axes[1], padding, c)
                 metYAxis = true
             } else {
                 _plotDrawLine(c, positionPix, padding, positionPix, c.canvas.height - padding);
@@ -148,7 +154,7 @@ function _plotDrawDataGrid(bounds, c, padding) {
             const positionAbs = bounds.yBounds[0] + positionRel
             const positionPix = c.canvas.height - positionRel*yPixPerUnit - padding;
             if (Math.abs(positionAbs) < yUnitError) {
-                _plotDrawXAxis(positionPix, padding, c)
+                _plotDrawXAxis(positionPix, axes[0], padding, c)
                 metXAxis = true
             } else {
                 _plotDrawLine(c, padding, positionPix, c.canvas.width - padding, positionPix);
@@ -160,54 +166,91 @@ function _plotDrawDataGrid(bounds, c, padding) {
     }
 
     if (metYAxis === false && metXAxis === false) {
-        _plotDrawAxesNotTouching(bounds, padding, c)
+        _plotDrawAxesNotTouching(bounds, axes, padding, c)
     } else if (metYAxis === false) {
-        _plotDrawYAxis(padding/2, padding, c)
+        _plotDrawYAxisNotTouching(bounds, axes, padding, c)
     } else if (metXAxis === false) {
-        _plotDrawXAxis(c.canvas.height - padding/2, padding, c)
+        _plotDrawXAxisNotTouching(bounds, axes, padding, c)
     }
 }
 
 /** When the plotted data doesn't intersect any axes, we need to draw them in the padding */
-function _plotDrawAxesNotTouching(bounds, padding, canv) {
+function _plotDrawAxesNotTouching(bounds, axes, padding, canv) {
+    const xUnitSize = canv.measureText(axes[0].unit)
+    const yUnitSize = canv.measureText(axes[1].unit)
     if (bounds.xBounds[0] > 0) {
         if (bounds.yBounds[0] > 0) { // upper right quadrant
-            _plotDrawXAxis(canv.canvas.height - padding/2, padding, canv)
-            _plotDrawYAxis(padding/2, padding, canv)
+            _plotDrawXAxis(canv.canvas.height - padding/2, axes[0], padding, canv)
+            _plotDrawYAxis(padding/2, axes[1], padding, canv)
         } else {                     // lower right quadrant
-            _plotDrawXAxis(padding/2, padding, canv)
+            _plotDrawXAxis(padding/2, axes[0], padding, canv)
             _plotDrawYAxisNoArrow(padding/2, padding, canv)
         }
     } else {
         if (bounds.yBounds[0] > 0) { // upper left quadrant
             _plotDrawXAxisNoArrow(canv.canvas.height - padding/2, padding, canv)
-            _plotDrawYAxis(canv.canvas.width - padding/2, padding, canv)
+            _plotDrawYAxis(canv.canvas.width - padding/2, axes[1], padding, canv)
+            canv.fillText(axes[0].unit, 10, canv.canvas.height - padding/2 - 2)
         } else {                     // lower left quadrant
             _plotDrawXAxisNoArrow(padding/2, padding, canv)
             _plotDrawYAxisNoArrow(canv.canvas.width - padding/2, padding, canv)
+            canv.fillText(axes[0].unit, 10, padding/2 - 2)
+            canv.fillText(axes[1].unit, canv.canvas.width - padding/2 - yUnitSize.width - 5, padding/2 - 2)
         }
     }
 }
 
-function _plotDrawXAxis(yPix, padding, c) {
-    c.lineWidth = 2
-    _plotDrawLine(c, 0, yPix,
-                     c.canvas.width, yPix);
-    _plotDrawLine(c, c.canvas.width, yPix,
-                     c.canvas.width - padding*0.8, yPix - padding/4);
-    _plotDrawLine(c, c.canvas.width, yPix,
-                     c.canvas.width - padding*0.8, yPix + padding/4);
-    c.lineWidth = 1
+function _plotDrawYAxisNotTouching(bounds, axes, padding, canv) {
+    if (bounds.xBounds[1] > 0) { // right half
+        _plotDrawYAxis(padding/2, axes[1], padding, canv)
+    } else {                     // left half
+        _plotDrawYAxis(canv.canvas.width - padding/2, axes[1], padding, canv)
+    }
+
 }
 
-function _plotDrawYAxis(xPix, pad, c) {
-    c.lineWidth = 2
-    _plotDrawLine(c, xPix, 0, xPix, c.canvas.height);
-    _plotDrawLine(c, xPix, 0,
+function _plotDrawXAxisNotTouching(bounds, axes, padding, canv) {
+    if (bounds.yBounds[1] > 0) { // top half
+        _plotDrawXAxis(canv.canvas.height - padding/2, axes[0], padding, canv)
+    } else {                     // bottom half
+        _plotDrawXAxis(padding/2, axes[0], padding, canv)
+    }
+
+}
+
+function _plotDrawXAxis(yPix, xAxis, padding, canv) {
+    const cWidth = canv.canvas.width
+    canv.lineWidth = 2
+    _plotDrawLine(canv, 0, yPix, cWidth, yPix);
+    _plotDrawLine(canv, cWidth, yPix, cWidth - padding*0.8, yPix - padding/4);
+    _plotDrawLine(canv, cWidth, yPix, cWidth - padding*0.8, yPix + padding/4);
+
+    const unitName = xAxis.unit
+    const unitCoord = cWidth - canv.measureText(unitName).width - 0.8*padding - 5
+    if (yPix > canv.canvas.height - padding) { // unit name goes below the axis
+        canv.fillText(unitName, unitCoord, canv.canvas.height - 2);
+    } else {
+        canv.fillText(unitName, unitCoord, yPix - 3);
+    }
+
+    canv.lineWidth = 1
+}
+
+function _plotDrawYAxis(xPix, yAxis, pad, canv) {
+    canv.lineWidth = 2
+    _plotDrawLine(canv, xPix, 0, xPix, canv.canvas.height);
+    _plotDrawLine(canv, xPix, 0,
                      xPix - pad/4, pad*0.8);
-    _plotDrawLine(c, xPix, 0,
+    _plotDrawLine(canv, xPix, 0,
                      xPix + pad/4, pad*0.8);
-    c.lineWidth = 1
+    const unitName = yAxis.unit
+    const sizeName = canv.measureText(unitName)
+    const widthOfName = sizeName.width
+    const heightOfName = sizeName.actualBoundingBoxAscent
+
+    const unitCoord = (xPix + widthOfName + 20 < canv.canvas.width) ? (xPix + 10) : (xPix - canv.measureText(unitName).width - 10)
+    canv.fillText(unitName, unitCoord, heightOfName + 2);
+    canv.lineWidth = 1
 }
 
 function _plotDrawXAxisNoArrow(yPix, padding, c) {

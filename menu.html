@@ -5,58 +5,58 @@
 
 <style>
 body {
-	background-color: black;
+    background-color: black;
 }
 
 .mainMenu {
-	top: 21px;
-	right: 20px;
-	position: absolute;
+    top: 21px;
+    right: 20px;
+    position: absolute;
 }
 
 .mainMenu._showen {
-	opacity: 1;
-	pointer-events: auto;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .mainMenu li:before {
-	display: none;
+    display: none;
 }
 
 .mainMenu li:hover a:before {
-	opacity: 1;
+    opacity: 1;
 }
 
 .mainMenu li:hover a:after {
-	transform: rotate(180deg);
+    transform: rotate(180deg);
 }
 
 .mainMenu li:hover .submenuWrap {
-	opacity: 1;
-	pointer-events: auto;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .mainMenu a {
-	font-family: sans;
-	font-size: 15px;
-	line-height: 20px;
-	color: white;
+    font-family: sans;
+    font-size: 15px;
+    line-height: 20px;
+    color: white;
 }
 
 .mainMenuList {
-	display: flex;
+    display: flex;
 }
 
 .mainMenuList > li > a {
-	position: relative;
+    position: relative;
 }
 
 .mainMenuList > li > a._active:after {
-	transform: rotate(0);
+    transform: rotate(0);
 }
 
 .mainMenuList > li > a._active:before {
-	opacity: 1;
+    opacity: 1;
 }
 
 /** Bar above when not hovering hover */
@@ -66,24 +66,24 @@ body {
     top: -0.5rem;
     left: -10%;
     width: 120%;
-	height: 6px;
+    height: 6px;
     border-radius: 3px;
-	background: white;
-	content: '';
-	opacity: 0;
-	transition: 0.2s ease opacity;
+    background: white;
+    content: '';
+    opacity: 0;
+    transition: 0.2s ease opacity;
 }
 
 .mainMenuList > li .toggleLink._toggle:after {
-	transform: rotate(180deg) translateY(0) !important;
+    transform: rotate(180deg) translateY(0) !important;
 }
 
 .mainMenuList li {
-	margin-right: 25px;
+    margin-right: 25px;
 }
 
 .mainMenuList li:last-child {
-	margin-right: 0;
+    margin-right: 0;
 }
 
 .jsAdrTopmenuSingle {
@@ -92,49 +92,49 @@ body {
 }
 
 .submenuWrap {
-	width: 220px;
-	position: absolute;
-	margin-top: -7px;
-	margin-left: -30px;
-	padding-top: 10px;
-	opacity: 0;
-	pointer-events: none;
-	transition: 0.3s ease opacity;
+    width: 220px;
+    position: absolute;
+    margin-top: -7px;
+    margin-left: -30px;
+    padding-top: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.3s ease opacity;
 }
 
 .submenuWrap._showen {
-	opacity: 1;
-	pointer-events: auto;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .submenu {
-	background: white;
-	padding: 30px 10px 30px 30px;
-	box-sizing: border-box;
+    background: white;
+    padding: 30px 10px 30px 30px;
+    box-sizing: border-box;
 }
 
 .submenu li {
-	margin-bottom: 20px!important;
+    margin-bottom: 20px!important;
 }
 
 .submenu li._current a {
-	color: rgba(0, 0, 0, 0.25);
+    color: rgba(0, 0, 0, 0.25);
 }
 
 .submenu li:last-child {
-	margin-bottom: 5px;
+    margin-bottom: 5px;
 }
 
 .submenu a {
-	color: hsla(0, 0%, 0%, 0.75);
-	font-size: 16px;
-	font-weight: normal;
-	text-transform: none;
-	transition: 0.2s ease;
+    color: hsla(0, 0%, 0%, 0.75);
+    font-size: 16px;
+    font-weight: normal;
+    text-transform: none;
+    transition: 0.2s ease;
 }
 
 .submenu a:hover {
-	color: hsl(313, 39%, 52%);
+    color: hsl(313, 39%, 52%);
 }
 </style>
 
@@ -142,27 +142,27 @@ body {
 <body>
 
 <div class="mainMenu">
-	<ul class="mainMenuList">
-		<li class="_current">
-			<a href="https://winbullgroup.ru/our-activities/" class="toggleLink jsSubmenuBtn">Asdf</a>
-			<div class="submenuWrap jsSubmenu">
-				<div class="submenu">
-					<ul>
-						<li>
-							<a href="asdf.com/" class="jsAdrTopmenu">Asdf1</a>
-						</li>
-						<li class="_current">
-							<a href="bcjk.com/" class="jsAdrTopmenu">Aasdf2</a>
-						</li>
-					</ul>
-				</div>
-			</div>
-		</li>		
-		<li>
-			<a href="other.com/" class="jsAdrTopmenuSingle">Bcjk</a>
-		</li>		
-	</ul>
-	
+    <ul class="mainMenuList">
+        <li class="_current">
+            <a href="https://winbullgroup.ru/our-activities/" class="toggleLink jsSubmenuBtn">Asdf</a>
+            <div class="submenuWrap jsSubmenu">
+                <div class="submenu">
+                    <ul>
+                        <li>
+                            <a href="asdf.com/" class="jsAdrTopmenu">Asdf1</a>
+                        </li>
+                        <li class="_current">
+                            <a href="bcjk.com/" class="jsAdrTopmenu">Aasdf2</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </li>
+        <li>
+            <a href="other.com/" class="jsAdrTopmenuSingle">Bcjk</a>
+        </li>
+    </ul>
+
 </div>
 
 </body>

@@ -6,7 +6,7 @@
 
 <style>
 body {
-	background-color: black;
+    background-color: black;
 }
 
 
@@ -129,7 +129,7 @@ function modalFormSubmit(submitForm, event) {
         return
     }
     fetch("/accr/create", { method: "POST", 
-							headers: {"Accept": "application/json", "Content-Type": "application/json"},
+                            headers: {"Accept": "application/json", "Content-Type": "application/json"},
                             credentials: "same-origin",
                             body: JSON.stringify(formData) }
     )
@@ -164,7 +164,7 @@ function validateAccreditationForm(formData) {
 <body>
 
 <div>
-	<button onclick="toggleModal();">Modal</button>
+    <button onclick="toggleModal();">Modal</button>
 </div>
 
 <div id="modalOverlay" style="display: none;">
