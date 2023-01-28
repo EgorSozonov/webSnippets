@@ -31,6 +31,12 @@ body {
     width: 600px;
 }
 
+.plotLegendDescr {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .plotLegendButtons button {
     border: 2px white solid;
     background: transparent;
@@ -45,11 +51,16 @@ body {
     transform: scale(1.08);
     transition: 0.3s ease;
 }
+
+.plotTitle {
+    font-size: 1.5rem;
+}
 </style>	
 
-<script src="plotting.js"></script>
+<script type="module" src="./plotting.mjs"></script>
+<script type="module">
+import { drawPlots, exportPlot, exportPlotsAll } from "./plotting.mjs";
 
-<script>
 const pagePlots = {
     "plot1": {
         series: {
@@ -137,39 +148,18 @@ const pagePlots = {
         },
 
         axes: [{ name: "count of objects", unit: "unit"},
-               { name: "wall clock time", unit: "s"}]
+               { name: "wall clock time", unit: "s"}],
+        title: "Sqrt-sine wave"
     },
     "plot2": {
         points: [ [-10, -2], [-20, -3.4], [40, -4.8], [50, -2.5] ],
         axes: [ {name: "potential of elephant", unit: "Volts"}, {name: "corrigibility", unit: "c"} ],
-        style: {color: "#00FF00", lineThickness: 2}
+        style: {color: "#00FF00", lineThickness: 2},
+        title: "Just a test plot"
     }
 }
 
-function drawPlots() {
-    for (let ky of Object.keys(pagePlots)) {
-        const elt = document.getElementById(ky)
-        if (!elt) continue;
-        const childCanvas = elt.querySelector("canvas")
-        const childLegend = elt.querySelector(".plotLegendDescr")
-        const buttonExport = elt.querySelector(".plotLegendExport")
-        if (!childCanvas || !childLegend || !buttonExport) continue;
-
-        plotTheData(pagePlots[ky], childCanvas.getContext("2d"))
-        childLegend.innerHTML = plotWriteLegend(pagePlots[ky])
-        buttonExport.dataset.plotId = ky
-    }
-}
-
-function exportPlot(event) {
-    alert(event.target.dataset.plotId)
-}
-
-function exportPlotsAll(event) {
-    alert(event.target.dataset.plotId)
-}
-
-window.onload = () => drawPlots();
+window.onload = () => drawPlots(pagePlots);
 </script>
 
 </head>
@@ -178,9 +168,10 @@ window.onload = () => drawPlots();
 <div> asdf Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te
 NOT ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum </div>
 <div id="plot1" class="plotWithLegend">
+    <div class="plotTitle"></div>
     <canvas width="640px" height="640px"></canvas>
     <div class="plotLegend">
-        <span class="plotLegendDescr"></span>
+        <div class="plotLegendDescr"></div>
         <span class="plotLegendButtons">
             <button class="plotLegendExport" title="Export data" onclick="exportPlot(event);">e</button>
             <button title="Export all data" onclick="exportPlotsAll();">E</button>
@@ -190,9 +181,10 @@ NOT ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te ipsum Lorem te i
 <div>Lorem te ipsum next paragraph. Lorem te ipsum next paragraph. Lorem te ipsum next paragraph.
 Lorem te ipsum next paragraph. Lorem te ipsum next paragraph. </div>
 <div id="plot2" class="plotWithLegend">
+    <div class="plotTitle"></div>
     <canvas width="640px" height="640px"></canvas>
     <div class="plotLegend">
-        <span class="plotLegendDescr"></span>
+        <div class="plotLegendDescr"></div>
         <span class="plotLegendButtons">
             <button class="plotLegendExport" title="Export data" onclick="exportPlot(event);">e</button>
             <button title="Export all data" onclick="exportPlotsAll();">E</button>
