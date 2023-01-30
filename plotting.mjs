@@ -32,18 +32,18 @@ function plotSerie(data, padding, canv) {
     const minMax = calcMinMax(data.points)
 
     const boundsUnits = calcBoundsUnits(minMax)
-
+    const layout = determineLayout(boundsUnits, padding)
     drawDataGrid(boundsUnits, data.axes, canv, padding)
 
     const xInterval = boundsUnits.xBounds[1] - boundsUnits.xBounds[0]
     const yInterval = boundsUnits.yBounds[1] - boundsUnits.yBounds[0]
 
     function xToPixels(value) {
-        return (value - boundsUnits.xBounds[0])/xInterval*widthPixels + padding
+        return (value - boundsUnits.xBounds[0])/xInterval*widthPixels + layout.topLeft[0]
     }
 
     function yToPixels(value) {
-        return heightPixels - (value - boundsUnits.yBounds[0])/yInterval*heightPixels + padding
+        return heightPixels - (value - boundsUnits.yBounds[0])/yInterval*heightPixels + layout.topLeft[1]
     }
 
     drawSerie(data, xToPixels, yToPixels, canv)
@@ -60,6 +60,7 @@ function plotSeries(data, padding, canv) {
     const widthPixels = canv.canvas.width - 2*padding
     const heightPixels = canv.canvas.height - 2*padding
     let minMax = null
+
     for (let ky of Object.keys(data.series)) {
         const newMinMax = calcMinMax(data.series[ky].points)
         if (minMax === null) {
@@ -70,22 +71,73 @@ function plotSeries(data, padding, canv) {
     }
 
     const boundsUnits = calcBoundsUnits(minMax)
+    const layout = determineLayout(boundsUnits, padding)
 
-    drawDataGrid(boundsUnits, data.axes, canv, padding)
+    drawDataGrid(boundsUnits, data.axes, canv, layout.topLeft, padding)
     const xInterval = boundsUnits.xBounds[1] - boundsUnits.xBounds[0]
     const yInterval = boundsUnits.yBounds[1] - boundsUnits.yBounds[0]
 
     function xToPixels(value) {
-        return (value - boundsUnits.xBounds[0])/xInterval*widthPixels + padding
+        return (value - boundsUnits.xBounds[0])/xInterval*widthPixels + layout.topLeft[0]
     }
 
     function yToPixels(value) {
-        return heightPixels - (value - boundsUnits.yBounds[0])/yInterval*heightPixels + padding
+        return heightPixels - (value - boundsUnits.yBounds[0])/yInterval*heightPixels + layout.topLeft[1]
     }
 
     for (let ky of Object.keys(data.series)) {
         drawSerie(data.series[ky], xToPixels, yToPixels, canv)
     }
+}
+
+/** Determines the position of the top left corner of the plot area on the canvas
+ Returns { topLeft: [x y], xPos: "left" | "inside" | "right", yPos: "left" | "inside" | "right"  }
+
+ */
+function determineLayout(boundsUnits, padding) {
+    const result = {}
+
+    if (boundsUnits.xBounds[0] > 0) {
+        result.yPos = "left"
+    } else if (boundsUnits.xBounds[1] < 0) {
+        result.yPos = "right"
+    } else {
+        result.yPos = "inside"
+    }
+    if (boundsUnits.yBounds[0] > 0) {
+        result.xPos = "left"
+    } else if (boundsUnits.yBounds[1] < 0) {
+        result.xPos = "right"
+    } else {
+        result.xPos = "inside"
+    }
+
+    if (result.yPos === "left") {
+        if (result.xPos === "left") {
+            result.topLeft = [2*padding - 2, padding*0.6] // top right
+        } else if (result.xPos === "inside") {
+            result.topLeft = [2*padding - 2, padding*0.6] // vert-middle right
+        } else {
+            result.topLeft = [2*padding - 2, 2*padding - 2] // bottom right
+        }
+    } else if (result.yPos === "inside") {
+        if (result.xPos === "left") {
+            result.topLeft = [padding, padding*0.6] // top hor-middle
+        } else if (result.xPos === "inside") {
+            result.topLeft = [padding, padding] // vert-middle hor-middle
+        } else {
+            result.topLeft = [padding, 2*padding - 2] // bottom hor-middle
+        }
+    } else {
+        if (result.xPos === "left") {
+            result.topLeft = [2, padding*0.6] // top left
+        } else if (result.xPos === "inside") {
+            result.topLeft = [2, padding] // vert-middle left
+        } else {
+            result.topLeft = [2, 2*padding - 2] // bottom left
+        }
+    }
+    return result
 }
 
 /** Draw a single serie (a single graph) of data on the canvas according to its style */
@@ -129,7 +181,7 @@ function calcMinMax(pts) {
             yMin = y
         } else if (y > yMax) {
             yMax = y
-        }                
+        }
     }
     return { xMin, xMax, yMin, yMax }
 }
@@ -179,12 +231,11 @@ function writeLegend(plotData) {
     if (plotData.series) {
         let result = ""
         for (let ky of Object.keys(plotData.series)) {
-            result += "<div style='background-color: "
+            result += ("<div style='background-color: "
 
-                + plotData.series[ky].style.color + "; width: 10px; height: 10px;'></div>";
+                + plotData.series[ky].style.color + "; min-width: 10px; min-height: 10px;'></div>");
             result += "<div>" + ky + "</div>"
         }
-        result += "<div>" + plotData.axes[1].name + " vs " + plotData.axes[0].name + "</div>"
         return result
     } else {
         return (plotData.axes[1].name + " vs " + plotData.axes[0].name)
@@ -192,12 +243,20 @@ function writeLegend(plotData) {
 
 }
 
-/** Bounds: { xBounds: { num num }, xUnit: num, yBounds: { num num }, yUnit: num } */
-function drawDataGrid(bounds, axes, c, padding) {
-    const xWidth = bounds.xBounds[1] - bounds.xBounds[0];
-    const xPixPerUnit = (c.canvas.width - 2*padding) / xWidth;
-    const yWidth = bounds.yBounds[1] - bounds.yBounds[0];
-    const yPixPerUnit = (c.canvas.height - 2*padding) / yWidth;
+/** Bounds: { xBounds: { num num }, xUnit: num, yBounds: { num num }, yUnit: num }
+    Axes: [ { name: string, unit: string} ]
+    topLeft: [x y]
+    c: canvas
+    padding: number
+    */
+function drawDataGrid(bounds, axes, c, topLeft, padding) {
+    const dataWidth = bounds.xBounds[1] - bounds.xBounds[0];
+    const plotWidth = c.canvas.width - 2*padding
+    const xPixPerUnit = plotWidth / dataWidth;
+
+    const plotHeight = c.canvas.height - 2*padding
+    const dataHeight = bounds.yBounds[1] - bounds.yBounds[0];
+    const yPixPerUnit = plotHeight / dataHeight;
 
     const axisColor =  "white";
     const gridColor = "hsl(0, 0%, 86%)";
@@ -205,63 +264,70 @@ function drawDataGrid(bounds, axes, c, padding) {
     c.fillStyle = textColor
     c.strokeStyle = gridColor;
 
+    const plotCoords = {bounds, axes, topLeft, padding,
+                        dataWidth, plotWidth, xPixPerUnit,
+                        dataHeight, plotHeight, yPixPerUnit }
+
     let metXAxis = false
     let metYAxis = false
     const xUnitError = bounds.xUnit/20
     const yUnitError = bounds.yUnit/20
     {   // vertical lines
         const numUnits = (bounds.xBounds[1] - bounds.xBounds[0])/bounds.xUnit
-        _plotDrawLine(c, padding, padding, padding, c.canvas.height - padding);
+        _plotDrawLine(c, topLeft[0], topLeft[1], topLeft[0], topLeft[1] + plotHeight);
         for (let i = 0; i < numUnits; i++) {
             const positionRel = i*bounds.xUnit;
             const positionAbs = bounds.xBounds[0] + positionRel
-            const positionPix = positionRel*xPixPerUnit + padding;
+            const positionPix = positionRel*xPixPerUnit + topLeft[0];
 
             if (Math.abs(positionAbs) < xUnitError) {
                 drawYAxis(positionPix, axes[1], padding, c)
                 metYAxis = true
             } else {
-                _plotDrawLine(c, positionPix, padding, positionPix, c.canvas.height - padding);
+                _plotDrawLine(c, positionPix, topLeft[1], positionPix, topLeft[1] + plotHeight);
             }
-            const printedCoordValue = positionAbs.toFixed(2).toString()
-            c.fillText(printedCoordValue, positionPix + 1, c.canvas.height/2 + 10);
         }
-        _plotDrawLine(c, c.canvas.width - padding, padding, c.canvas.width - padding, c.canvas.height - padding);
+        _plotDrawLine(c, topLeft[0] + plotWidth, topLeft[1],
+                         topLeft[0] + plotWidth, topLeft[1] + plotHeight);
     }
     {   // horizontal lines
         const numUnits = (bounds.yBounds[1] - bounds.yBounds[0])/bounds.yUnit
-        _plotDrawLine(c, padding, padding, c.canvas.width - padding, padding);
+        _plotDrawLine(c, topLeft[0], topLeft[1],
+                         topLeft[0] + plotWidth, topLeft[1]);
         for (let i = 0; i < numUnits; i++) {
             const positionRel = i*bounds.yUnit;
             const positionAbs = bounds.yBounds[0] + positionRel
-            const positionPix = c.canvas.height - positionRel*yPixPerUnit - padding;
+            const positionPix = plotHeight - positionRel*yPixPerUnit + topLeft[1];
             if (Math.abs(positionAbs) < yUnitError) {
                 drawXAxis(positionPix, axes[0], padding, c)
                 metXAxis = true
             } else {
-                _plotDrawLine(c, padding, positionPix, c.canvas.width - padding, positionPix);
+                _plotDrawLine(c, topLeft[0], positionPix, topLeft[0] + plotWidth, positionPix);
             }
-            const printedCoordValue = positionAbs.toFixed(2).toString()
-            c.fillText(printedCoordValue, c.canvas.width/2 + 2, positionPix - 4);
         }
-        _plotDrawLine(c, padding, c.canvas.height - padding, c.canvas.width - padding, c.canvas.height - padding);
+        _plotDrawLine(c, topLeft[0], topLeft[1] + plotHeight,
+                         topLeft[0] + plotWidth, topLeft[1] + plotHeight);
     }
 
     if (metYAxis === false && metXAxis === false) {
-        drawAxesNotTouching(bounds, axes, padding, c)
+        drawAxesNotTouching(plotCoords, c)
     } else if (metYAxis === false) {
-        drawYAxisNotTouching(bounds, axes, padding, c)
+        drawYAxisNotTouching(plotCoords, c)
     } else if (metXAxis === false) {
-        drawXAxisNotTouching(bounds, axes, padding, c)
+        drawXAxisNotTouching(plotCoords, c)
     }
 }
 
-/** When the plotted data doesn't intersect any axes, we need to draw them in the padding */
-function drawAxesNotTouching(bounds, axes, padding, canv) {
-    const xUnitSize = canv.measureText(axes[0].unit)
-    const yUnitSize = canv.measureText(axes[1].unit)
-    if (bounds.xBounds[0] > 0) {
-        if (bounds.yBounds[0] > 0) { // upper right quadrant
+/** When the plotted data doesn't intersect any axes, we need to draw them in the padding
+    plotCoords: {bounds, axes, topLeft, padding,
+                        dataWidth, plotWidth, xPixPerUnit,
+                        dataHeight, plotHeight, yPixPerUnit }
+*/
+function drawAxesNotTouching(plotCoords, canv) {
+    const xUnitSize = canv.measureText(plotCoords.axes[0].unit)
+    const yUnitSize = canv.measureText(plotCoords.axes[1].unit)
+    if (plotCoords.bounds.xBounds[0] > 0) {
+        if (plotCoords.bounds.yBounds[0] > 0) { // upper right quadrant
             drawXAxis(canv.canvas.height - padding/2, axes[0], padding, canv)
             drawYAxis(padding/2, axes[1], padding, canv)
         } else {                     // lower right quadrant
@@ -269,7 +335,7 @@ function drawAxesNotTouching(bounds, axes, padding, canv) {
             drawYAxisNoArrow(padding/2, padding, canv)
         }
     } else {
-        if (bounds.yBounds[0] > 0) { // upper left quadrant
+        if (plotCoords.bounds.yBounds[0] > 0) { // upper left quadrant
             drawXAxisNoArrow(canv.canvas.height - padding/2, padding, canv)
             drawYAxis(canv.canvas.width - padding/2, axes[1], padding, canv)
             canv.fillText(axes[0].unit, 10, canv.canvas.height - padding/2 - 2)
@@ -282,23 +348,47 @@ function drawAxesNotTouching(bounds, axes, padding, canv) {
     }
 }
 
-function drawYAxisNotTouching(bounds, axes, padding, canv) {
-    if (bounds.xBounds[1] > 0) { // right half
-        drawYAxis(padding/2, axes[1], padding, canv)
-    } else {                     // left half
-        drawYAxis(canv.canvas.width - padding/2, axes[1], padding, canv)
-    }
 
-}
-
-function drawXAxisNotTouching(bounds, axes, padding, canv) {
-    if (bounds.yBounds[1] > 0) { // top half
-        drawXAxis(canv.canvas.height - padding/2, axes[0], padding, canv)
+function drawXAxisNotTouching(plotCoords, canv) {
+    if (plotCoords.bounds.yBounds[1] > 0) { // top half
+        drawXAxis(canv.canvas.height - plotCoords.padding/4, plotCoords.axes[0], plotCoords.padding, canv)
     } else {                     // bottom half
-        drawXAxis(padding/2, axes[0], padding, canv)
+        drawXAxis(plotCoords.padding/4, plotCoords.axes[0], plotCoords.padding, canv)
     }
 
 }
+
+/**
+    plotCoords: {bounds, axes, topLeft, padding,
+                dataWidth, plotWidth, xPixPerUnit,
+                dataHeight, plotHeight, yPixPerUnit }
+ */
+function drawYAxisNotTouching(plotCoords, canv) {
+    const numUnits = (plotCoords.bounds.yBounds[1] - plotCoords.bounds.yBounds[0])/plotCoords.bounds.yUnit
+    if (plotCoords.bounds.xBounds[1] > 0) { // right half
+        drawYAxis(plotCoords.padding/4, plotCoords.axes[1], plotCoords.padding, canv)
+        for (let i = 0; i < numUnits; i++) {
+            const positionRel = i*plotCoords.bounds.yUnit;
+            const positionAbs = plotCoords.bounds.xBounds[0] + positionRel
+            const positionPix = plotCoords.plotHeight - positionRel*plotCoords.yPixPerUnit + plotCoords.topLeft[1];
+
+            const printedCoordValue = positionAbs.toFixed(2).toString()
+            canv.fillText(printedCoordValue, 2, positionPix);
+        }
+    } else {                     // left half
+        drawYAxis(canv.canvas.width - padding/4, axes[1], padding, canv)
+        for (let i = 0; i < numUnits; i++) {
+            const positionRel = i*plotCoords.bounds.yUnit;
+            const positionAbs = plotCoords.bounds.xBounds[0] + positionRel
+            const positionPix = plotCoords.plotHeight - positionRel*plotCoords.yPixPerUnit + plotCoords.topLeft[1];
+
+            const printedCoordValue = positionAbs.toFixed(2).toString()
+            c.fillText(printedCoordValue, plotCoords.topLeft[0] + plotCoords.plotWidth, positionPix);
+        }
+    }
+
+}
+
 
 function drawXAxis(yPix, xAxis, padding, canv) {
     const cWidth = canv.canvas.width
@@ -558,7 +648,7 @@ function plotDraw3dFunction(c, zMin, zMax, alpha, gv, func) {
         const start = +new Date();
         while (+new Date() < start + 70 && !stopNow) {
             if (w >= c.ctx.canvas.width) break;
-            
+
             h++;
             if (h === c.ctx.canvas.height + 1) {
                 w++;
