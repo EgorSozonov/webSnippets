@@ -8,7 +8,7 @@ export { drawPlots, exportPlot, exportPlotsAll }
 function plotSerieOrSeries(data, canv) {
     clearCanvas(canv);
     const isMultipleSeries = data.series !== undefined
-    const padding = 20
+    const padding = 24
     if (isMultipleSeries) {
         plotSeries(data, padding, canv)
     } else {
@@ -245,22 +245,23 @@ function drawAxesNotTouching(plotCoords, canv) {
     const yUnitSize = canv.measureText(plotCoords.axes[1].unit)
     if (plotCoords.bounds.xBounds[0] > 0) {
         if (plotCoords.bounds.yBounds[0] > 0) { // upper right quadrant
-            drawXAxis(canv.canvas.height - padding/2, axes[0], padding, canv)
-            drawYAxis(padding/2, axes[1], padding, canv)
+            drawXAxis(canv.canvas.height - plotCoords.padding/4, plotCoords.axes[0], plotCoords.padding, canv)
+            drawYAxis(plotCoords.padding/4, plotCoords.axes[1], plotCoords.padding, canv)
         } else {                     // lower right quadrant
-            drawXAxis(padding/2, axes[0], padding, canv)
-            drawYAxisNoArrow(padding/2, padding, canv)
+            drawXAxis(plotCoords.padding*0.75, plotCoords.axes[0], plotCoords.padding, canv)
+            drawYAxisNoArrow(plotCoords.padding/4, plotCoords.padding, canv)
         }
     } else {
         if (plotCoords.bounds.yBounds[0] > 0) { // upper left quadrant
-            drawXAxisNoArrow(canv.canvas.height - padding/2, padding, canv)
-            drawYAxis(canv.canvas.width - padding/2, axes[1], padding, canv)
-            canv.fillText(axes[0].unit, 10, canv.canvas.height - padding/2 - 2)
+            drawXAxisNoArrow(canv.canvas.height - plotCoords.padding/2, plotCoords.padding, canv)
+            drawYAxis(canv.canvas.width - plotCoords.padding/2, plotCoords.axes[1], plotCoords.padding, canv)
+            canv.fillText(plotCoords.axes[0].unit, 10, canv.canvas.height - plotCoords.padding/2 - 2)
         } else {                     // lower left quadrant
-            drawXAxisNoArrow(padding/2, padding, canv)
-            drawYAxisNoArrow(canv.canvas.width - padding/2, padding, canv)
-            canv.fillText(axes[0].unit, 10, padding/2 - 2)
-            canv.fillText(axes[1].unit, canv.canvas.width - padding/2 - yUnitSize.width - 5, padding/2 - 2)
+            drawXAxisNoArrow(plotCoords.padding*0.75, plotCoords.padding, canv)
+            drawYAxisNoArrow(canv.canvas.width - plotCoords.padding/2, plotCoords.padding, canv)
+            canv.fillText(plotCoords.axes[0].unit, plotCoords.topLeft[0] + 5, plotCoords.padding + xUnitSize.actualBoundingBoxAscent + 2)
+            canv.fillText(plotCoords.axes[1].unit,
+                          canv.canvas.width - plotCoords.padding/2 - yUnitSize.width - 5, plotCoords.padding/2 - 2)
         }
     }
 }
@@ -297,17 +298,21 @@ function drawYAxisNotTouching(plotCoords, canv) {
     }
 }
 
-/** Draw the numeric values for both axes */
+/** Draw the numeric values for both axes
+   plotCoords: {bounds, axes, layout, padding,
+                dataWidth, plotWidth, xPixPerUnit,
+                dataHeight, plotHeight, yPixPerUnit }
+ */
 function drawNumbers(plotCoords, canv) {
-    const numUnitsX = (plotCoords.bounds.yBounds[1] - plotCoords.bounds.yBounds[0])/plotCoords.bounds.yUnit
+    const numUnitsX = (plotCoords.bounds.xBounds[1] - plotCoords.bounds.xBounds[0])/plotCoords.bounds.xUnit
     const numUnitsY = (plotCoords.bounds.yBounds[1] - plotCoords.bounds.yBounds[0])/plotCoords.bounds.yUnit
 
     let positionXNums
     if (plotCoords.xPos === "left") {
-        positionXNums = plotCoords.plotHeight - 5
+        positionXNums = plotCoords.plotHeight + plotCoords.topLeft[1] + canv.measureText("2").actualBoundingBoxAscent + 2
     } else if (plotCoords.xPos === "inside") {
         if (plotCoords.bounds.yBounds[0] === 0) { // the x axis is the lower border of the plot
-            positionXNums = canv.canvas.height - 2
+            positionXNums = canv.canvas.height - canv.measureText("2").actualBoundingBoxAscent - 2
         } else if (plotCoords.bounds.yBounds[1] === 0) {
             positionXNums = 10
         } else {
@@ -319,27 +324,28 @@ function drawNumbers(plotCoords, canv) {
 
     let positionYNums
     if (plotCoords.yPos === "left") {
-        positionYNums = 8
+        positionYNums = plotCoords.padding*0.32
     } else if (plotCoords.yPos === "inside") {
         positionYNums = (plotCoords.bounds.xBounds[1]/plotCoords.dataWidth)*plotCoords.plotHeight + plotCoords.topLeft[1]
     } else {
-        positionYNums = plotCoords.plotWidth - 10
+        positionYNums = plotCoords.plotWidth + plotCoords.topLeft[0] + 2
     }
 
-    for (let i = 0; i < numUnitsX; i++) {
+    for (let i = 0; i <= numUnitsX; i++) {
         const positionRel = i*plotCoords.bounds.xUnit;
         const positionAbs = plotCoords.bounds.xBounds[0] + positionRel
         const positionPix = positionRel*plotCoords.xPixPerUnit + plotCoords.topLeft[0];
 
         const printedCoordValue = trimEndZeroes(positionAbs.toFixed(2).toString())
         const textWidth = canv.measureText(printedCoordValue).width
-        canv.fillText(printedCoordValue, Math.max(positionPix - textWidth, 0), positionXNums);
+
+        canv.fillText(printedCoordValue, Math.max(positionPix - textWidth - 2, 0), positionXNums);
     }
 
-    for (let i = 0; i < numUnitsY; i++) {
+    for (let i = 0; i <= numUnitsY; i++) {
         const positionRel = i*plotCoords.bounds.yUnit;
         const positionAbs = plotCoords.bounds.yBounds[0] + positionRel
-        const positionPix = plotCoords.plotHeight - positionRel*plotCoords.yPixPerUnit + plotCoords.topLeft[1] - 2;
+        const positionPix = plotCoords.plotHeight - positionRel*plotCoords.yPixPerUnit + plotCoords.topLeft[1] - 3;
 
         const printedCoordValue = trimEndZeroes(positionAbs.toFixed(2).toString())
         canv.fillText(printedCoordValue, positionYNums, positionPix);
@@ -362,16 +368,17 @@ function drawXAxis(yPix, xAxis, padding, canv) {
     const cWidth = canv.canvas.width
     canv.lineWidth = 2
     drawALine(canv, 0, yPix, cWidth, yPix);
-    drawALine(canv, cWidth, yPix, cWidth - padding*0.8, yPix - padding/4);
-    drawALine(canv, cWidth, yPix, cWidth - padding*0.8, yPix + padding/4);
+    drawALine(canv, cWidth, yPix, cWidth - padding*0.5, yPix - padding/8);
+    drawALine(canv, cWidth, yPix, cWidth - padding*0.5, yPix + padding/8);
 
     const unitName = xAxis.unit
-    const unitCoord = cWidth - canv.measureText(unitName).width - 0.8*padding - 5
-    if (yPix > canv.canvas.height - padding) { // unit name goes below the axis
-        canv.fillText(unitName, unitCoord, canv.canvas.height - 2);
-    } else {
-        canv.fillText(unitName, unitCoord, yPix - 3);
-    }
+    const unitXCoord = cWidth - canv.measureText(unitName).width - 4
+    canv.fillText(unitName, unitXCoord, yPix - padding/2);
+    // if (yPix > canv.canvas.height - padding) { // unit name goes below the axis
+    //     canv.fillText(unitName, unitXCoord, canv.canvas.height - 2);
+    // } else {
+    //     canv.fillText(unitName, unitXCoord, yPix + canv.measureText(unitName).actualBoundingBoxAscent + 5);
+    // }
 
     canv.lineWidth = 1
 }
@@ -380,9 +387,9 @@ function drawYAxis(xPix, yAxis, pad, canv) {
     canv.lineWidth = 2
     drawALine(canv, xPix, 0, xPix, canv.canvas.height);
     drawALine(canv, xPix, 0,
-                     xPix - pad/4, pad*0.8);
+                     xPix - pad/8, pad*0.5);
     drawALine(canv, xPix, 0,
-                     xPix + pad/4, pad*0.8);
+                     xPix + pad/8, pad*0.5);
     const unitName = yAxis.unit
     const sizeName = canv.measureText(unitName)
     const widthOfName = sizeName.width
@@ -668,11 +675,12 @@ function drawPlots(pagePlots) {
         const childLegend = elt.querySelector(".plotLegendDescr")
         const buttonExport = elt.querySelector(".plotLegendExport")
         const plotTitle = elt.querySelector(".plotTitle")
-        if (!childCanvas || !childLegend || !buttonExport) continue;
+        //if (!childCanvas || !childLegend || !buttonExport) continue;
+        if (!childCanvas || !childLegend) continue;
 
         plotSerieOrSeries(pagePlots[ky], childCanvas.getContext("2d"))
         childLegend.innerHTML = writeLegend(pagePlots[ky])
-        buttonExport.dataset.plotId = ky
+        //buttonExport.dataset.plotId = ky
         if (plotTitle) {
             plotTitle.innerHTML = pagePlots[ky].title
         }
@@ -754,9 +762,10 @@ function writeLegend(plotData) {
     if (plotData.series) {
         let result = ""
         for (let ky of Object.keys(plotData.series)) {
-            result += ("<div style='background-color: "
-
-                + plotData.series[ky].style.color + "; min-width: 10px; min-height: 10px;'></div>");
+            result += ("<div style='background-color: " + plotData.series[ky].style.color);
+            result += (plotData.series[ky].style.lineThickness > 2)
+                        ? "; min-width: 14px; min-height: 14px;'></div>"
+                        : "; min-width: 10px; min-height: 10px;'></div>";
             result += "<div>" + ky + "</div>"
         }
         return result
