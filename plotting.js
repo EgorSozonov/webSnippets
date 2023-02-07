@@ -679,7 +679,7 @@ function drawPlots(pagePlots) {
         if (!childCanvas || !childLegend) continue;
 
         plotSerieOrSeries(pagePlots[ky], childCanvas.getContext("2d"))
-        childLegend.innerHTML = writeLegend(pagePlots[ky])
+        childLegend.appendChild(createLegend(pagePlots[ky]))
         //buttonExport.dataset.plotId = ky
         if (plotTitle) {
             plotTitle.innerHTML = pagePlots[ky].title
@@ -758,20 +758,29 @@ function calcBoundsUnitsOneDim(min, max) {
 }
 
 
-function writeLegend(plotData) {
+function createLegend(plotData) {
+	const legend = document.createElement('div')
     if (plotData.series) {
-        let result = ""
+        
         for (let ky of Object.keys(plotData.series)) {
-            result += ("<div style='background-color: " + plotData.series[ky].style.color);
-            result += (plotData.series[ky].style.lineThickness > 2)
-                        ? "; min-width: 14px; min-height: 14px;'></div>"
-                        : "; min-width: 10px; min-height: 10px;'></div>";
-            result += "<div>" + ky + "</div>"
+			const colorBox = document.createElement('div')
+			colorBox.style.backgroundColor = plotData.series[ky].style.color
+			if (plotData.series[ky].style.lineThickness > 2) {
+				colorBox.style.minWidth = "14px"
+				colorBox.style.minHeight = "14px"
+			} else {
+				colorBox.style.minWidth = "10px"
+				colorBox.style.minHeight = "10px"
+			}
+			legend.appendChild(colorBox)
+			const nameDiv = document.createElement('div')
+			nameDiv.innerHTML = ky
+			legend.appendChild(nameDiv)			
         }
-        return result
-    } else {
-        return (plotData.axes[1].name + " vs " + plotData.axes[0].name)
+    } else {		
+        legend.innerHTML = (plotData.axes[1].name + " vs " + plotData.axes[0].name)
     }
+    return legend
 
 }
 
